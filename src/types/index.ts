@@ -20,6 +20,7 @@ export interface MovieListItem {
   /** Enriched from detail for theater view */
   revenue?: number | null
   runtime?: number | null
+  budget?: number | null
 }
 
 export interface MovieDetail extends MovieListItem {
@@ -28,6 +29,7 @@ export interface MovieDetail extends MovieListItem {
   tagline: string | null
   revenue?: number | null
   budget?: number | null
+  imdb_id?: string | null
   credits?: Credits
   watch_providers?: WatchProviders
 }
@@ -101,6 +103,8 @@ export interface FilterState {
 
 /** Theater mode: sort by revenue (box office), score, or release */
 export type TheaterSort = 'revenue' | 'score' | 'release_date'
+
+export type TrendDirection = 'up' | 'down' | 'flat'
 
 /** Streaming mode: sort by trending (popularity) or score */
 export type StreamingSort = 'trending' | 'score'

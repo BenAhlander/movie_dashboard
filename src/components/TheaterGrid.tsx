@@ -1,13 +1,14 @@
 import { Box, Skeleton } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TheaterCard } from './TheaterCard'
-import type { MovieListItem } from '../types'
+import type { MovieListItem, TrendDirection } from '../types'
 
 interface TheaterGridProps {
   movies: MovieListItem[]
   loading?: boolean
   onSelectMovie?: (movie: MovieListItem) => void
   showRank?: boolean
+  trendMap?: Map<number, TrendDirection>
 }
 
 function CardSkeleton() {
@@ -20,7 +21,7 @@ function CardSkeleton() {
   )
 }
 
-export function TheaterGrid({ movies, loading, onSelectMovie, showRank }: TheaterGridProps) {
+export function TheaterGrid({ movies, loading, onSelectMovie, showRank, trendMap }: TheaterGridProps) {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -54,6 +55,7 @@ export function TheaterGrid({ movies, loading, onSelectMovie, showRank }: Theate
             <TheaterCard
               movie={movie}
               rank={showRank ? index + 1 : undefined}
+              trend={trendMap?.get(movie.id)}
               onClick={onSelectMovie ? () => onSelectMovie(movie) : undefined}
             />
           </motion.div>

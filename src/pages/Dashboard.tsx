@@ -1,7 +1,5 @@
 import { useState } from 'react'
-import { Box, Container, Typography, Alert, Button, Collapse } from '@mui/material'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import { Box, Container, Typography, Alert, Button, Skeleton } from '@mui/material'
 import { Header } from '../components/Header'
 import { ModeSwitcher } from '../components/ModeSwitcher'
 import { Hero } from '../components/Hero'
@@ -10,8 +8,8 @@ import { TheaterCard } from '../components/TheaterCard'
 import { StreamingCard } from '../components/StreamingCard'
 import { TheaterFiltersBar } from '../components/TheaterFiltersBar'
 import { StreamingFiltersBar } from '../components/StreamingFiltersBar'
-import { TheaterGrid } from '../components/TheaterGrid'
 import { StreamingGrid } from '../components/StreamingGrid'
+import { BoxOfficePanel } from '../components/BoxOfficePanel'
 import { ChartPanel } from '../components/ChartPanel'
 import { DetailDrawer } from '../components/DetailDrawer'
 import { useTheaterMovies } from '../hooks/useTheaterMovies'
@@ -40,7 +38,6 @@ export function Dashboard() {
   const [theaterFilters, setTheaterFilters] = useState<TheaterFilters>(defaultTheaterFilters)
   const [streamingFilters, setStreamingFilters] = useState<StreamingFilters>(defaultStreamingFilters)
   const [selectedMovieId, setSelectedMovieId] = useState<number | null>(null)
-  const [analyticsOpen, setAnalyticsOpen] = useState(false)
 
   const theater = useTheaterMovies(theaterFilters)
   const streaming = useStreaming(streamingFilters, 'week')
@@ -51,9 +48,6 @@ export function Dashboard() {
 
   const isTheater = mode === 'theater'
 
-  const theaterResults = movieSearch.isSearchActive
-    ? movieSearch.results
-    : theater.results
   const streamingResults = multiSearch.isSearchActive
     ? multiSearch.results
     : streaming.results
@@ -74,7 +68,7 @@ export function Dashboard() {
     <Box sx={{ minHeight: '100vh', pb: 4 }}>
       <Header />
       <ModeSwitcher value={mode} onChange={setMode} />
-      <Hero item={heroItem} />
+      <Hero item={heroItem} loading={isTheater ? theater.isLoading : streaming.isLoading} />
 
       <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
         {isDemo && !isApiUnreachable && (
@@ -99,50 +93,71 @@ export function Dashboard() {
         {isTheater && (
           <>
             <TheaterFiltersBar filters={theaterFilters} onChange={(next) => setTheaterFilters((p) => ({ ...p, ...next }))} />
-            {!movieSearch.isSearchActive && theater.buckets.topBoxOffice.length > 0 && (
+            {theater.isLoading && !movieSearch.isSearchActive && (
+              <>
+                {['Top box office', "Critics' favorites", 'Crowd favorites'].map((title) => (
+                  <BucketRow key={title} title={title}>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Box key={i} sx={{ width: 160, minWidth: 160 }}>
+                        <Skeleton variant="rectangular" height={240} sx={{ borderRadius: 1 }} className="shimmer" />
+                        <Skeleton variant="text" width="80%" height={24} sx={{ mt: 1 }} />
+                        <Skeleton variant="text" width="60%" height={20} sx={{ mt: 0.5 }} />
+                      </Box>
+                    ))}
+                  </BucketRow>
+                ))}
+              </>
+            )}
+            {!theater.isLoading && !movieSearch.isSearchActive && theater.buckets.topBoxOffice.length > 0 && (
               <BucketRow title="Top box office">
                 {theater.buckets.topBoxOffice.map((m, i) => (
                   <TheaterCard key={m.id} movie={m} rank={i + 1} onClick={() => handleSelectTheaterMovie(m)} />
                 ))}
               </BucketRow>
             )}
-            {!movieSearch.isSearchActive && theater.buckets.criticsFavorite.length > 0 && (
+            {!theater.isLoading && !movieSearch.isSearchActive && theater.buckets.criticsFavorite.length > 0 && (
               <BucketRow title="Critics' favorites">
                 {theater.buckets.criticsFavorite.map((m, i) => (
                   <TheaterCard key={m.id} movie={m} rank={i + 1} onClick={() => handleSelectTheaterMovie(m)} />
                 ))}
               </BucketRow>
             )}
-            {!movieSearch.isSearchActive && theater.buckets.crowdFavorite.length > 0 && (
+            {!theater.isLoading && !movieSearch.isSearchActive && theater.buckets.crowdFavorite.length > 0 && (
               <BucketRow title="Crowd favorites">
                 {theater.buckets.crowdFavorite.map((m, i) => (
                   <TheaterCard key={m.id} movie={m} rank={i + 1} onClick={() => handleSelectTheaterMovie(m)} />
                 ))}
               </BucketRow>
             )}
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              {movieSearch.isSearchActive ? `Search results` : 'All in theaters'}
-            </Typography>
-            <TheaterGrid
-              movies={theaterResults}
-              loading={theater.isLoading || movieSearch.isSearching}
-              onSelectMovie={handleSelectTheaterMovie}
-              showRank={!movieSearch.isSearchActive}
-            />
           </>
         )}
 
         {!isTheater && (
           <>
             <StreamingFiltersBar filters={streamingFilters} onChange={(next) => setStreamingFilters((p) => ({ ...p, ...next }))} />
-            {!multiSearch.isSearchActive && streaming.buckets.trendingThisWeek.length > 0 && (
+            {streaming.isLoading && !multiSearch.isSearchActive && (
+              <>
+                {['Trending this week', 'Best rated'].map((title) => (
+                  <BucketRow key={title} title={title}>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Box key={i} sx={{ width: 160, minWidth: 160 }}>
+                        <Skeleton variant="rectangular" height={240} sx={{ borderRadius: 1 }} className="shimmer" />
+                        <Skeleton variant="text" width="80%" height={24} sx={{ mt: 1 }} />
+                        <Skeleton variant="text" width="40%" height={20} sx={{ mt: 0.5 }} />
+                      </Box>
+                    ))}
+                  </BucketRow>
+                ))}
+              </>
+            )}
+            {!streaming.isLoading && !multiSearch.isSearchActive && streaming.buckets.trendingThisWeek.length > 0 && (
               <BucketRow title="Trending this week">
                 {streaming.buckets.trendingThisWeek.map((item, i) => (
                   <StreamingCard key={`${item.media_type}-${item.id}`} item={item} rank={i + 1} onClick={() => handleSelectStreamingItem(item)} />
                 ))}
               </BucketRow>
             )}
-            {!multiSearch.isSearchActive && streaming.buckets.bestRated.length > 0 && (
+            {!streaming.isLoading && !multiSearch.isSearchActive && streaming.buckets.bestRated.length > 0 && (
               <BucketRow title="Best rated">
                 {streaming.buckets.bestRated.map((item, i) => (
                   <StreamingCard key={`${item.media_type}-${item.id}`} item={item} rank={i + 1} onClick={() => handleSelectStreamingItem(item)} />
@@ -162,35 +177,17 @@ export function Dashboard() {
         )}
 
         <Box sx={{ mt: 4 }}>
-          <Box
-            component="button"
-            type="button"
-            onClick={() => setAnalyticsOpen(!analyticsOpen)}
-            aria-label="Toggle analytics"
-            aria-expanded={analyticsOpen}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
-              border: 0,
-              background: 'none',
-              color: 'text.secondary',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              '&:hover': { color: 'text.primary' },
-            }}
-          >
-            {analyticsOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            Analytics
-          </Box>
-          <Collapse in={analyticsOpen}>
-            {isTheater && <ChartPanel movies={theater.results} loading={theater.isLoading} />}
-            {!isTheater && (
-              <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                Charts available in Theater mode.
-              </Typography>
-            )}
-          </Collapse>
+          {isTheater && (
+            <>
+              <BoxOfficePanel movies={theater.results} loading={theater.isLoading} />
+              <ChartPanel movies={theater.results} loading={theater.isLoading} />
+            </>
+          )}
+          {!isTheater && (
+            <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+              Charts available in Theater mode.
+            </Typography>
+          )}
         </Box>
       </Container>
 

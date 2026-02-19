@@ -21,6 +21,12 @@ export function formatNumber(n: number): string {
   return String(n)
 }
 
+/** Full currency with commas: $63,000,000 */
+export function formatCurrency(amount: number | null | undefined): string {
+  if (amount == null || amount <= 0) return 'N/A'
+  return `$${amount.toLocaleString('en-US')}`
+}
+
 /** Box office / revenue: $42M, $1.2B */
 export function formatRevenue(revenue: number | null | undefined): string {
   if (revenue == null || revenue <= 0) return '—'

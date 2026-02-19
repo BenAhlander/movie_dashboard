@@ -7,8 +7,9 @@ import {
   Skeleton,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
+import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber'
 import { posterUrl, backdropUrl } from '../utils/imageUrl'
-import { formatRuntime, formatDate, formatNumber, formatRevenue } from '../utils/formatters'
+import { formatRuntime, formatDate, formatNumber, formatRevenue, formatCurrency } from '../utils/formatters'
 import { audienceScorePercent } from '../utils/scoreScaling'
 import type { MovieDetail } from '../types'
 import { TMDB_IMAGE_BASE } from '../utils/constants'
@@ -106,6 +107,50 @@ export function DetailDrawer({ open, onClose, movie, loading }: DetailDrawerProp
                   ))}
                 </Box>
               )}
+              {(movie.budget || movie.revenue) ? (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    Financials
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Budget</Typography>
+                      <Typography variant="body2">{formatCurrency(movie.budget)}</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Revenue</Typography>
+                      <Typography variant="body2">{formatCurrency(movie.revenue)}</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Profit</Typography>
+                      {movie.budget && movie.revenue ? (() => {
+                        const profit = movie.revenue - movie.budget
+                        return (
+                          <Typography variant="body2" sx={{ color: profit >= 0 ? '#4caf50' : '#f44336' }}>
+                            {profit >= 0 ? '+' : ''}{formatCurrency(Math.abs(profit))}
+                            {profit < 0 && <span> (loss)</span>}
+                          </Typography>
+                        )
+                      })() : (
+                        <Typography variant="body2">N/A</Typography>
+                      )}
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">ROI</Typography>
+                      {movie.budget && movie.budget > 0 && movie.revenue ? (() => {
+                        const roi = ((movie.revenue - movie.budget) / movie.budget) * 100
+                        return (
+                          <Typography variant="body2" sx={{ color: roi >= 0 ? '#4caf50' : '#f44336' }}>
+                            {roi >= 0 ? '+' : ''}{roi.toFixed(0)}%
+                          </Typography>
+                        )
+                      })() : (
+                        <Typography variant="body2">N/A</Typography>
+                      )}
+                    </Box>
+                  </Box>
+                </Box>
+              ) : null}
               {movie.overview && (
                 <Typography variant="body2" sx={{ mt: 2, lineHeight: 1.6 }}>
                   {movie.overview}
@@ -132,6 +177,37 @@ export function DetailDrawer({ open, onClose, movie, loading }: DetailDrawerProp
                   </Typography>
                 </Box>
               )}
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Get tickets
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Chip
+                    component="a"
+                    href={`https://www.cinemark.com/search?query=${encodeURIComponent(movie.title)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    icon={<ConfirmationNumberIcon sx={{ fontSize: 16 }} />}
+                    label="Cinemark"
+                    size="small"
+                    clickable
+                    sx={{ borderColor: 'primary.main', color: 'primary.main' }}
+                    variant="outlined"
+                  />
+                  <Chip
+                    component="a"
+                    href={`https://www.megaplextheatres.com/search?query=${encodeURIComponent(movie.title)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    icon={<ConfirmationNumberIcon sx={{ fontSize: 16 }} />}
+                    label="Megaplex"
+                    size="small"
+                    clickable
+                    sx={{ borderColor: 'primary.main', color: 'primary.main' }}
+                    variant="outlined"
+                  />
+                </Box>
+              </Box>
               {movie.watch_providers?.results?.US && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>

@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material'
+import { Box, Typography, Skeleton } from '@mui/material'
 import { motion } from 'framer-motion'
 import { backdropUrl } from '../utils/imageUrl'
 import { audienceScorePercent } from '../utils/scoreScaling'
@@ -13,9 +13,48 @@ function isStreaming(item: HeroItem): item is StreamingListItem {
 
 interface HeroProps {
   item: HeroItem | null
+  loading?: boolean
 }
 
-export function Hero({ item }: HeroProps) {
+export function Hero({ item, loading }: HeroProps) {
+  if (!item && !loading) return null
+
+  if (!item && loading) {
+    return (
+      <Box
+        sx={{
+          position: 'relative',
+          height: { xs: '36vh', md: '40vh' },
+          minHeight: 240,
+          overflow: 'hidden',
+          background: 'linear-gradient(135deg, #1a0a0a 0%, #0a0a0a 100%)',
+        }}
+      >
+        <Box
+          sx={{
+            position: 'relative',
+            zIndex: 1,
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
+            pb: 2,
+            px: { xs: 2, md: 4 },
+            maxWidth: 1200,
+            mx: 'auto',
+          }}
+        >
+          <Skeleton variant="text" width={320} height={48} className="shimmer" />
+          <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+            <Skeleton variant="text" width={40} height={24} className="shimmer" />
+            <Skeleton variant="text" width={100} height={24} className="shimmer" />
+          </Box>
+          <Skeleton variant="text" width={480} height={20} sx={{ mt: 1, display: { xs: 'none', sm: 'block' } }} className="shimmer" />
+        </Box>
+      </Box>
+    )
+  }
+
   if (!item) return null
 
   const backdrop = backdropUrl(item.backdrop_path, 'w1280')

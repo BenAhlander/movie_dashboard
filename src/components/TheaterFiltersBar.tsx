@@ -40,7 +40,7 @@ export function TheaterFiltersBar({ filters, onChange }: TheaterFiltersBarProps)
             label="Sort by"
             onChange={(e) => onChange({ sortBy: e.target.value as TheaterSort })}
           >
-            <MenuItem value="revenue">Box office</MenuItem>
+            <MenuItem value="revenue">Weekly box office</MenuItem>
             <MenuItem value="score">Rating</MenuItem>
             <MenuItem value="release_date">Release</MenuItem>
           </Select>

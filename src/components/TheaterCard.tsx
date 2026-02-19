@@ -1,17 +1,27 @@
 import { Card, CardContent, CardMedia, Typography, Box } from '@mui/material'
+import TrendingUpIcon from '@mui/icons-material/TrendingUp'
+import TrendingDownIcon from '@mui/icons-material/TrendingDown'
+import TrendingFlatIcon from '@mui/icons-material/TrendingFlat'
 import { motion } from 'framer-motion'
 import { posterUrl } from '../utils/imageUrl'
 import { audienceScorePercent } from '../utils/scoreScaling'
 import { formatDate, formatRevenue } from '../utils/formatters'
-import type { MovieListItem } from '../types'
+import type { MovieListItem, TrendDirection } from '../types'
 
 interface TheaterCardProps {
   movie: MovieListItem
   rank?: number
+  trend?: TrendDirection
   onClick?: () => void
 }
 
-export function TheaterCard({ movie, rank, onClick }: TheaterCardProps) {
+const trendConfig = {
+  up: { Icon: TrendingUpIcon, color: '#4caf50', label: 'Trending up' },
+  down: { Icon: TrendingDownIcon, color: '#f44336', label: 'Trending down' },
+  flat: { Icon: TrendingFlatIcon, color: 'rgba(255,255,255,0.5)', label: 'Holding steady' },
+} as const
+
+export function TheaterCard({ movie, rank, trend, onClick }: TheaterCardProps) {
   const poster = posterUrl(movie.poster_path, 'w342')
   const score = audienceScorePercent(movie.vote_average)
   const revenue = movie.revenue != null && movie.revenue > 0 ? formatRevenue(movie.revenue) : null
@@ -73,7 +83,7 @@ export function TheaterCard({ movie, rank, onClick }: TheaterCardProps) {
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
             {formatDate(movie.release_date)}
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
             <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.95)', fontWeight: 600 }}>
               {score}%
             </Typography>
@@ -82,6 +92,10 @@ export function TheaterCard({ movie, rank, onClick }: TheaterCardProps) {
                 {revenue}
               </Typography>
             )}
+            {trend && (() => {
+              const { Icon, color, label } = trendConfig[trend]
+              return <Icon sx={{ fontSize: 16, color }} aria-label={label} />
+            })()}
           </Box>
         </CardContent>
       </Card>

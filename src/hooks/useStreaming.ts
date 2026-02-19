@@ -14,7 +14,7 @@ export function useStreaming(filters: StreamingFilters, window: 'day' | 'week' =
     staleTime: STALE_TIME_MS,
   })
 
-  const raw = query.data?.length ? query.data : mockStreamingList
+  const raw = query.data?.length ? query.data : query.isLoading ? [] : mockStreamingList
   const isDemo = !query.data?.length && !query.isLoading
   const isApiUnreachable = query.isError
 

@@ -40,7 +40,9 @@ export async function fetchTheaterListEnriched(limit: number = 15): Promise<Movi
   const byId = new Map(details.map((d) => [d.id, d]))
   return list.map((m) => {
     const d = byId.get(m.id)
-    return d ? { ...m, revenue: d.revenue ?? undefined, runtime: d.runtime ?? undefined } : m
+    return d
+      ? { ...m, revenue: d.revenue ?? undefined, runtime: d.runtime ?? undefined, budget: d.budget ?? undefined }
+      : m
   })
 }
 
