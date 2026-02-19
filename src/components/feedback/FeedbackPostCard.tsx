@@ -1,6 +1,20 @@
 'use client'
 
-import { Box, Card, Chip, Typography } from '@mui/material'
+import { useState } from 'react'
+import {
+  Box,
+  Card,
+  Chip,
+  Typography,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+} from '@mui/material'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import { motion } from 'framer-motion'
 import { VoteControl } from './VoteControl'
 import type { FeedbackPost } from '@/types'
@@ -33,9 +47,16 @@ function timeAgo(dateStr: string): string {
 interface FeedbackPostCardProps {
   post: FeedbackPost
   onVote: (postId: string, direction: 'up' | 'down') => void
+  onDelete?: (postId: string) => void
 }
 
-export function FeedbackPostCard({ post, onVote }: FeedbackPostCardProps) {
+export function FeedbackPostCard({
+  post,
+  onVote,
+  onDelete,
+}: FeedbackPostCardProps) {
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -84,6 +105,19 @@ export function FeedbackPostCard({ post, onVote }: FeedbackPostCardProps) {
               }}
               variant="outlined"
             />
+            {onDelete && (
+              <IconButton
+                size="small"
+                onClick={() => setConfirmOpen(true)}
+                sx={{
+                  color: 'text.disabled',
+                  '&:hover': { color: '#f44336' },
+                  ml: -0.5,
+                }}
+              >
+                <DeleteOutlineIcon fontSize="small" />
+              </IconButton>
+            )}
           </Box>
           <Typography
             variant="body2"
@@ -103,6 +137,28 @@ export function FeedbackPostCard({ post, onVote }: FeedbackPostCardProps) {
           </Typography>
         </Box>
       </Card>
+
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+        <DialogTitle>Delete post?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            This will permanently remove your post and all its votes. This
+            action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
+          <Button
+            color="error"
+            onClick={() => {
+              setConfirmOpen(false)
+              onDelete?.(post.id)
+            }}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </motion.div>
   )
 }

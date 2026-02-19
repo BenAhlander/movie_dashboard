@@ -144,6 +144,7 @@ export interface FeedbackPost {
   category: FeedbackCategory
   score: number
   userVote: -1 | 0 | 1
+  isOwner?: boolean
   created_at: string
   updated_at: string
 }

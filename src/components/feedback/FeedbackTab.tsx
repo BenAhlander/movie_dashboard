@@ -89,6 +89,9 @@ export function FeedbackTab({ authEnabled }: FeedbackTabProps) {
           page: String(pageNum),
           voterId: anonId.current,
         })
+        if (user?.sub) {
+          params.set('userId', user.sub as string)
+        }
         const res = await fetch(`/api/feedback?${params}`)
         if (!res.ok) throw new Error('Failed to fetch')
         const data = await res.json()
@@ -115,7 +118,7 @@ export function FeedbackTab({ authEnabled }: FeedbackTabProps) {
         setLoading(false)
       }
     },
-    [filters]
+    [filters, user]
   )
 
   useEffect(() => {
@@ -209,6 +212,24 @@ export function FeedbackTab({ authEnabled }: FeedbackTabProps) {
     }
   }
 
+  async function handleDelete(postId: string) {
+    try {
+      const res = await fetch(`/api/feedback/${postId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const err = await res.json()
+        setToast({
+          message: err.error || 'Failed to delete post',
+          severity: 'error',
+        })
+        return
+      }
+      setPosts((prev) => prev.filter((p) => p.id !== postId))
+      setToast({ message: 'Post deleted', severity: 'success' })
+    } catch {
+      setToast({ message: 'Failed to delete post', severity: 'error' })
+    }
+  }
+
   const handleNewPost = () => {
     if (authEnabled && !user) {
       window.location.href = '/auth/login?returnTo=/feedback'
@@ -287,7 +308,12 @@ export function FeedbackTab({ authEnabled }: FeedbackTabProps) {
       {posts.length > 0 && (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           {posts.map((post) => (
-            <FeedbackPostCard key={post.id} post={post} onVote={handleVote} />
+            <FeedbackPostCard
+              key={post.id}
+              post={post}
+              onVote={handleVote}
+              onDelete={post.isOwner ? handleDelete : undefined}
+            />
           ))}
           {hasMore && (
             <Box sx={{ textAlign: 'center', py: 2 }}>

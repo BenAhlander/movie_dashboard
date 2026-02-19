@@ -23,6 +23,7 @@ interface PostRow {
   category: string
   score: number
   user_vote: number
+  is_owner: boolean
   created_at: string
   updated_at: string
 }
@@ -43,6 +44,7 @@ export async function GET(req: NextRequest) {
   const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10))
   const voterIdRaw = url.searchParams.get('voterId') || ''
   const voterHash = voterIdRaw ? hashVoterId(voterIdRaw) : ''
+  const userId = url.searchParams.get('userId') || ''
   const offset = (page - 1) * PAGE_SIZE
 
   const sql = getDb()
@@ -59,7 +61,7 @@ export async function GET(req: NextRequest) {
     if (hasCategory && voterHash) {
       if (sort === 'new') {
         rows = (await sql`
-          SELECT p.*, COALESCE(v.vote, 0) as user_vote
+          SELECT p.*, COALESCE(v.vote, 0) as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner
           FROM feedback_posts p
           LEFT JOIN feedback_votes v ON v.post_id = p.id AND v.voter_hash = ${voterHash}
           WHERE p.category = ${category}
@@ -68,7 +70,7 @@ export async function GET(req: NextRequest) {
         `) as PostRow[]
       } else if (sort === 'top') {
         rows = (await sql`
-          SELECT p.*, COALESCE(v.vote, 0) as user_vote
+          SELECT p.*, COALESCE(v.vote, 0) as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner
           FROM feedback_posts p
           LEFT JOIN feedback_votes v ON v.post_id = p.id AND v.voter_hash = ${voterHash}
           WHERE p.category = ${category}
@@ -77,7 +79,7 @@ export async function GET(req: NextRequest) {
         `) as PostRow[]
       } else {
         rows = (await sql`
-          SELECT p.*, COALESCE(v.vote, 0) as user_vote
+          SELECT p.*, COALESCE(v.vote, 0) as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner
           FROM feedback_posts p
           LEFT JOIN feedback_votes v ON v.post_id = p.id AND v.voter_hash = ${voterHash}
           WHERE p.category = ${category}
@@ -91,7 +93,7 @@ export async function GET(req: NextRequest) {
     } else if (hasCategory) {
       if (sort === 'new') {
         rows = (await sql`
-          SELECT p.*, 0 as user_vote
+          SELECT p.*, 0 as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner
           FROM feedback_posts p
           WHERE p.category = ${category}
           ORDER BY p.created_at DESC
@@ -99,7 +101,7 @@ export async function GET(req: NextRequest) {
         `) as PostRow[]
       } else if (sort === 'top') {
         rows = (await sql`
-          SELECT p.*, 0 as user_vote
+          SELECT p.*, 0 as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner
           FROM feedback_posts p
           WHERE p.category = ${category}
           ORDER BY p.score DESC, p.created_at DESC
@@ -107,7 +109,7 @@ export async function GET(req: NextRequest) {
         `) as PostRow[]
       } else {
         rows = (await sql`
-          SELECT p.*, 0 as user_vote
+          SELECT p.*, 0 as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner
           FROM feedback_posts p
           WHERE p.category = ${category}
           ORDER BY (p.score + 1.0) / POWER(GREATEST(EXTRACT(EPOCH FROM (now() - p.created_at)) / 3600.0, 1.0), 0.5) DESC
@@ -120,7 +122,7 @@ export async function GET(req: NextRequest) {
     } else if (voterHash) {
       if (sort === 'new') {
         rows = (await sql`
-          SELECT p.*, COALESCE(v.vote, 0) as user_vote
+          SELECT p.*, COALESCE(v.vote, 0) as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner
           FROM feedback_posts p
           LEFT JOIN feedback_votes v ON v.post_id = p.id AND v.voter_hash = ${voterHash}
           ORDER BY p.created_at DESC
@@ -128,7 +130,7 @@ export async function GET(req: NextRequest) {
         `) as PostRow[]
       } else if (sort === 'top') {
         rows = (await sql`
-          SELECT p.*, COALESCE(v.vote, 0) as user_vote
+          SELECT p.*, COALESCE(v.vote, 0) as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner
           FROM feedback_posts p
           LEFT JOIN feedback_votes v ON v.post_id = p.id AND v.voter_hash = ${voterHash}
           ORDER BY p.score DESC, p.created_at DESC
@@ -136,7 +138,7 @@ export async function GET(req: NextRequest) {
         `) as PostRow[]
       } else {
         rows = (await sql`
-          SELECT p.*, COALESCE(v.vote, 0) as user_vote
+          SELECT p.*, COALESCE(v.vote, 0) as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner
           FROM feedback_posts p
           LEFT JOIN feedback_votes v ON v.post_id = p.id AND v.voter_hash = ${voterHash}
           ORDER BY (p.score + 1.0) / POWER(GREATEST(EXTRACT(EPOCH FROM (now() - p.created_at)) / 3600.0, 1.0), 0.5) DESC
@@ -149,21 +151,21 @@ export async function GET(req: NextRequest) {
     } else {
       if (sort === 'new') {
         rows = (await sql`
-          SELECT p.*, 0 as user_vote
+          SELECT p.*, 0 as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner
           FROM feedback_posts p
           ORDER BY p.created_at DESC
           LIMIT ${PAGE_SIZE} OFFSET ${offset}
         `) as PostRow[]
       } else if (sort === 'top') {
         rows = (await sql`
-          SELECT p.*, 0 as user_vote
+          SELECT p.*, 0 as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner
           FROM feedback_posts p
           ORDER BY p.score DESC, p.created_at DESC
           LIMIT ${PAGE_SIZE} OFFSET ${offset}
         `) as PostRow[]
       } else {
         rows = (await sql`
-          SELECT p.*, 0 as user_vote
+          SELECT p.*, 0 as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner
           FROM feedback_posts p
           ORDER BY (p.score + 1.0) / POWER(GREATEST(EXTRACT(EPOCH FROM (now() - p.created_at)) / 3600.0, 1.0), 0.5) DESC
           LIMIT ${PAGE_SIZE} OFFSET ${offset}
@@ -181,6 +183,7 @@ export async function GET(req: NextRequest) {
       category: r.category,
       score: Number(r.score),
       userVote: Number(r.user_vote),
+      isOwner: Boolean(r.is_owner),
       created_at: r.created_at,
       updated_at: r.updated_at,
     }))
@@ -201,6 +204,7 @@ export async function GET(req: NextRequest) {
 
 /** POST /api/feedback — create a new post */
 export async function POST(req: NextRequest) {
+  let authorId: string | null = null
   if (auth0) {
     const session = await auth0.getSession()
     if (!session) {
@@ -209,6 +213,7 @@ export async function POST(req: NextRequest) {
         { status: 401 }
       )
     }
+    authorId = session.user.sub ?? null
   }
 
   if (!hasDatabase()) {
@@ -260,8 +265,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const rows = await sql`
-      INSERT INTO feedback_posts (title, body, category)
-      VALUES (${cleanTitle}, ${cleanBody}, ${category})
+      INSERT INTO feedback_posts (title, body, category, author_id)
+      VALUES (${cleanTitle}, ${cleanBody}, ${category}, ${authorId})
       RETURNING *
     `
     const post = rows[0]
@@ -274,6 +279,7 @@ export async function POST(req: NextRequest) {
           category: post.category,
           score: post.score,
           userVote: 0,
+          isOwner: !!authorId,
           created_at: post.created_at,
           updated_at: post.updated_at,
         },
