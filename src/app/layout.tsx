@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { ThemeRegistry } from '@/components/ThemeRegistry'
+import { LayoutShell } from '@/components/LayoutShell'
 import '@/index.css'
 
 export const metadata: Metadata = {
@@ -23,7 +24,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://image.tmdb.org" />
       </head>
       <body>
-        <ThemeRegistry>{children}</ThemeRegistry>
+        <ThemeRegistry>
+          <LayoutShell>{children}</LayoutShell>
+        </ThemeRegistry>
       </body>
     </html>
   )

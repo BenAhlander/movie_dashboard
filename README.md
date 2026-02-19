@@ -4,7 +4,7 @@ A Netflix-cinematic, responsive React dashboard for **now playing** and **trendi
 
 ## Features
 
-- **Dual mode**: Theater (box office/now-playing) and Streaming (trending movies + TV)
+- **Three modes**: Theater (box office/now-playing), Streaming (trending movies + TV), and Feedback (community board)
 - **Hero** with backdrop, parallax-style motion, film grain, and vignette
 - **Movie grid** with poster cards, rank badges, Audience Score (TMDB) and Hype (momentum proxy)
 - **Search**: Calls the TMDB search API to find any movie or TV show (debounced, 400ms)
@@ -47,6 +47,27 @@ cp .env.example .env
 **Note:** The key is embedded in the client bundle and visible to users. TMDB allows this for read-only use; you can add referrer restrictions in your TMDB account if needed.
 
 If `VITE_TMDB_API_KEY` is not set, the app runs in **demo mode** with local mock data.
+
+#### Feedback tab (optional)
+
+The Feedback tab requires a Postgres database (Neon/Vercel Postgres):
+
+- **`POSTGRES_URL`** — Neon/Vercel Postgres connection string (auto-set by Vercel when you link a Neon DB)
+- **`VOTER_HASH_PEPPER`** — Secret string used to hash anonymous voter IDs before storing in DB. Use any random string.
+
+Run the migration to create tables:
+
+```bash
+psql $POSTGRES_URL -f migrations/001_feedback_tables.sql
+```
+
+Without `POSTGRES_URL`, the Feedback tab shows an empty state with no errors.
+
+#### Limitations of localStorage voting
+
+- Votes are tracked per browser via `localStorage`. Clearing storage or using incognito allows re-voting.
+- The server enforces one vote per hashed anonymous ID per post, but a new anonymous ID is generated when localStorage is cleared.
+- This is an acceptable trade-off for a no-auth MVP. For stricter controls, add authentication.
 
 ### 3. Run locally
 

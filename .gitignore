@@ -11,6 +11,7 @@ node_modules
 dist
 .next
 next-env.d.ts
+tsconfig.tsbuildinfo
 .env
 .env.local
 .env.*.local
@@ -30,3 +31,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.vercel

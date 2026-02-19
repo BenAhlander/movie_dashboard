@@ -19,29 +19,43 @@ No test runner is configured.
 ## Environment Variables
 
 - `TMDB_API_KEY` — TMDB v3 API key (set in `.env`). Server-only (no `NEXT_PUBLIC_` prefix). Used by Route Handlers in `src/app/api/`. Without it, the app runs in demo mode with mock data from `src/services/mockData.ts`.
+- `POSTGRES_URL` — Neon/Vercel Postgres connection string for the Feedback tab. Without it, Feedback shows an empty state.
+- `VOTER_HASH_PEPPER` — Secret string to hash anonymous voter IDs before DB storage.
 
 ## Architecture
 
-**Entry:** `src/app/layout.tsx` (ThemeRegistry, metadata) → `src/app/page.tsx` (server component, fetches initial data) → `Dashboard.tsx` (client component)
+**Entry:** `src/app/layout.tsx` (ThemeRegistry, metadata) → `LayoutShell` (client: Header, ModeSwitcher, DetailDrawerProvider, DetailDrawer) → route pages
 
-**Dual Mode:** Theater (box office/now-playing focus) vs Streaming (trending movies + TV). Toggled via `ModeSwitcher` component.
+**Route structure:**
+- `/` → redirects to `/theater`
+- `/theater` — Server component fetches `/api/theater` → `TheaterView` (client)
+- `/streaming` — Server component fetches `/api/streaming` → `StreamingView` (client)
+- `/feedback` — Renders `FeedbackTab` (client, self-contained)
+
+**Three Modes:** Theater (box office/now-playing focus), Streaming (trending movies + TV), and Feedback (Reddit-style community board). Navigation via `ModeSwitcher` using `usePathname()` + `router.push()`.
 
 **Data flow:**
-1. `app/page.tsx` (server) fetches initial theater + streaming data via internal API routes
-2. API Route Handlers (`app/api/`) call TMDB server-side with 15-min revalidation
-3. Dashboard (client) receives initial data as props, handles filtering/sorting/search client-side
-4. Detail drawer and streaming search use client-side `fetch('/api/...')` calls
+1. Route pages (server) fetch data via internal API routes with 15-min revalidation
+2. API Route Handlers (`app/api/`) call TMDB server-side
+3. View components (client) receive initial data as props, handle filtering/sorting/search client-side
+4. Detail drawer state is shared via `DetailDrawerContext` in the layout shell
+5. Streaming search uses client-side `fetch('/api/search')` calls
 
 **API Routes:**
 - `GET /api/theater` — Now playing enriched with revenue/budget (top 20)
 - `GET /api/streaming?window=week` — Trending movies + TV combined
 - `GET /api/movie/[id]` — Movie detail + credits + watch providers
 - `GET /api/search?q=...&type=movie|multi` — Search proxy
+- `GET /api/feedback?sort=hot|new|top&category=all|bug|feature|general&page=1&voterId=...` — Feedback posts
+- `POST /api/feedback` — Create feedback post (body: title, body, category)
+- `POST /api/feedback/[id]/vote` — Vote on post (body: voterId, action: up|down|remove)
 
 **Key layers:**
 - `src/app/` — Next.js App Router (layout, page, loading, error, API routes)
-- `src/components/` — UI components (all `'use client'`: Header, Hero, Dashboard, MovieCard/Grid, FiltersBar, ChartPanel, DetailDrawer, Theater*/Streaming* variants, ThemeRegistry)
+- `src/components/` — UI components (all `'use client'`: Header, Hero, LayoutShell, TheaterView, StreamingView, DetailDrawerContext, MovieCard/Grid, FiltersBar, ChartPanel, DetailDrawer, Theater*/Streaming* variants, ThemeRegistry)
+- `src/components/feedback/` — Feedback tab components (FeedbackTab, FeedbackPostCard, FeedbackForm, FeedbackControlBar, VoteControl)
 - `src/services/tmdb.ts` — Server-only TMDB API client (uses `process.env.TMDB_API_KEY`)
+- `src/services/db.ts` — Neon Postgres connection helper (uses `process.env.DATABASE_URL`)
 - `src/services/mockData.ts` — Demo mode fallback data
 - `src/utils/` — Formatters, score scaling, image URL helpers, constants
 - `src/types/index.ts` — All TypeScript interfaces (MovieListItem, MovieDetail, etc.)

@@ -2,7 +2,7 @@ export type MovieListType = 'now_playing' | 'trending'
 export type TrendingWindow = 'day' | 'week'
 
 /** Primary app mode: Theater (box office) vs Streaming (trending) */
-export type AppMode = 'theater' | 'streaming'
+export type AppMode = 'theater' | 'streaming' | 'feedback'
 
 export type MediaType = 'movie' | 'tv'
 
@@ -35,7 +35,12 @@ export interface MovieDetail extends MovieListItem {
 }
 
 export interface Credits {
-  cast: { id: number; name: string; character: string; profile_path: string | null }[]
+  cast: {
+    id: number
+    name: string
+    character: string
+    profile_path: string | null
+  }[]
   crew: { id: number; name: string; job: string; profile_path: string | null }[]
 }
 
@@ -125,4 +130,31 @@ export interface StreamingFilters {
   sortBy: StreamingSort
   sortDir: SortDirection
   typeFilter: StreamingTypeFilter
+}
+
+/* ── Feedback types ── */
+
+export type FeedbackCategory = 'bug' | 'feature' | 'general'
+export type FeedbackSort = 'hot' | 'new' | 'top'
+
+export interface FeedbackPost {
+  id: string
+  title: string
+  body: string
+  category: FeedbackCategory
+  score: number
+  userVote: -1 | 0 | 1
+  created_at: string
+  updated_at: string
+}
+
+export interface FeedbackFilters {
+  sortBy: FeedbackSort
+  category: FeedbackCategory | 'all'
+}
+
+export interface FeedbackFormData {
+  title: string
+  body: string
+  category: FeedbackCategory
 }
