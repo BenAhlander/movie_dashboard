@@ -1,26 +1,63 @@
 import { TheaterView } from '@/components/TheaterView'
+import * as tmdb from '@/services/tmdb'
+import { mockMovieList } from '@/services/mockData'
 import type { MovieListItem } from '@/types'
 
-function getBaseUrl(): string {
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`
-  return `http://localhost:${process.env.PORT || 3000}`
+const DETAIL_CONCURRENCY = 5
+const ENRICH_LIMIT = 20
+
+async function fetchWithConcurrency<T, R>(
+  items: T[],
+  fn: (item: T) => Promise<R>,
+  concurrency: number,
+): Promise<R[]> {
+  const results: R[] = []
+  let index = 0
+  async function worker(): Promise<void> {
+    while (index < items.length) {
+      const i = index++
+      results[i] = await fn(items[i])
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, items.length) }, () => worker()),
+  )
+  return results
 }
 
 export default async function TheaterPage() {
-  const base = getBaseUrl()
+  if (!tmdb.hasApiKey()) {
+    return (
+      <TheaterView initialTheater={mockMovieList} isDemo={true} isApiUnreachable={false} />
+    )
+  }
 
-  const res = await fetch(`${base}/api/theater`, {
-    next: { revalidate: 900 },
-  }).catch(() => null)
-
-  const data: { results: MovieListItem[]; demo?: boolean; error?: boolean } =
-    res?.ok ? await res.json() : { results: [], demo: true, error: true }
-
-  return (
-    <TheaterView
-      initialTheater={data.results}
-      isDemo={data.demo || false}
-      isApiUnreachable={data.error || false}
-    />
-  )
+  try {
+    const { results: list } = await tmdb.getNowPlaying()
+    const toEnrich = (list ?? []).slice(0, ENRICH_LIMIT)
+    const details = await fetchWithConcurrency(
+      toEnrich,
+      (m) => tmdb.getMovie(m.id),
+      DETAIL_CONCURRENCY,
+    )
+    const byId = new Map(details.map((d) => [d.id, d]))
+    const enriched: MovieListItem[] = (list ?? []).map((m) => {
+      const d = byId.get(m.id)
+      return d
+        ? {
+            ...m,
+            revenue: d.revenue ?? undefined,
+            runtime: d.runtime ?? undefined,
+            budget: d.budget ?? undefined,
+          }
+        : m
+    })
+    return (
+      <TheaterView initialTheater={enriched} isDemo={false} isApiUnreachable={false} />
+    )
+  } catch {
+    return (
+      <TheaterView initialTheater={mockMovieList} isDemo={true} isApiUnreachable={true} />
+    )
+  }
 }
