@@ -71,4 +71,21 @@ export const tmdbClient = {
   async getWatchProviders(id: number | string): Promise<WatchProviders> {
     return get<WatchProviders>(`/movie/${id}/watch/providers`)
   },
+
+  async searchMovies(query: string, page = 1): Promise<{ results: MovieListItem[]; total_results: number }> {
+    return get<{ results: MovieListItem[]; total_results: number }>('/search/movie', {
+      query,
+      page: String(page),
+    })
+  },
+
+  async searchMulti(
+    query: string,
+    page = 1,
+  ): Promise<{ results: (MovieListItem & { media_type?: string; name?: string; first_air_date?: string })[]; total_results: number }> {
+    return get<{
+      results: (MovieListItem & { media_type?: string; name?: string; first_air_date?: string })[]
+      total_results: number
+    }>('/search/multi', { query, page: String(page) })
+  },
 }

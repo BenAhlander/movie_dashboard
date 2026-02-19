@@ -17,6 +17,7 @@ import { DetailDrawer } from '../components/DetailDrawer'
 import { useTheaterMovies } from '../hooks/useTheaterMovies'
 import { useStreaming } from '../hooks/useStreaming'
 import { useMovieDetails } from '../hooks/useMovieDetails'
+import { useSearchMovies, useSearchMulti } from '../hooks/useSearchMovies'
 import type { AppMode, MovieListItem, StreamingListItem, TheaterFilters, StreamingFilters } from '../types'
 
 const defaultTheaterFilters: TheaterFilters = {
@@ -45,7 +46,18 @@ export function Dashboard() {
   const streaming = useStreaming(streamingFilters, 'week')
   const { data: detailMovie, isLoading: detailLoading } = useMovieDetails(selectedMovieId)
 
+  const movieSearch = useSearchMovies(theaterFilters.search)
+  const multiSearch = useSearchMulti(streamingFilters.search)
+
   const isTheater = mode === 'theater'
+
+  const theaterResults = movieSearch.isSearchActive
+    ? movieSearch.results
+    : theater.results
+  const streamingResults = multiSearch.isSearchActive
+    ? multiSearch.results
+    : streaming.results
+
   const heroItem = isTheater
     ? (theater.buckets.topBoxOffice[0] ?? theater.results[0] ?? null)
     : (streaming.buckets.trendingThisWeek[0] ?? streaming.results[0] ?? null)
@@ -87,21 +99,21 @@ export function Dashboard() {
         {isTheater && (
           <>
             <TheaterFiltersBar filters={theaterFilters} onChange={(next) => setTheaterFilters((p) => ({ ...p, ...next }))} />
-            {theater.buckets.topBoxOffice.length > 0 && (
+            {!movieSearch.isSearchActive && theater.buckets.topBoxOffice.length > 0 && (
               <BucketRow title="Top box office">
                 {theater.buckets.topBoxOffice.map((m, i) => (
                   <TheaterCard key={m.id} movie={m} rank={i + 1} onClick={() => handleSelectTheaterMovie(m)} />
                 ))}
               </BucketRow>
             )}
-            {theater.buckets.criticsFavorite.length > 0 && (
+            {!movieSearch.isSearchActive && theater.buckets.criticsFavorite.length > 0 && (
               <BucketRow title="Critics' favorites">
                 {theater.buckets.criticsFavorite.map((m, i) => (
                   <TheaterCard key={m.id} movie={m} rank={i + 1} onClick={() => handleSelectTheaterMovie(m)} />
                 ))}
               </BucketRow>
             )}
-            {theater.buckets.crowdFavorite.length > 0 && (
+            {!movieSearch.isSearchActive && theater.buckets.crowdFavorite.length > 0 && (
               <BucketRow title="Crowd favorites">
                 {theater.buckets.crowdFavorite.map((m, i) => (
                   <TheaterCard key={m.id} movie={m} rank={i + 1} onClick={() => handleSelectTheaterMovie(m)} />
@@ -109,13 +121,13 @@ export function Dashboard() {
               </BucketRow>
             )}
             <Typography variant="h6" sx={{ mb: 1 }}>
-              All in theaters
+              {movieSearch.isSearchActive ? `Search results` : 'All in theaters'}
             </Typography>
             <TheaterGrid
-              movies={theater.results}
-              loading={theater.isLoading}
+              movies={theaterResults}
+              loading={theater.isLoading || movieSearch.isSearching}
               onSelectMovie={handleSelectTheaterMovie}
-              showRank
+              showRank={!movieSearch.isSearchActive}
             />
           </>
         )}
@@ -123,14 +135,14 @@ export function Dashboard() {
         {!isTheater && (
           <>
             <StreamingFiltersBar filters={streamingFilters} onChange={(next) => setStreamingFilters((p) => ({ ...p, ...next }))} />
-            {streaming.buckets.trendingThisWeek.length > 0 && (
+            {!multiSearch.isSearchActive && streaming.buckets.trendingThisWeek.length > 0 && (
               <BucketRow title="Trending this week">
                 {streaming.buckets.trendingThisWeek.map((item, i) => (
                   <StreamingCard key={`${item.media_type}-${item.id}`} item={item} rank={i + 1} onClick={() => handleSelectStreamingItem(item)} />
                 ))}
               </BucketRow>
             )}
-            {streaming.buckets.bestRated.length > 0 && (
+            {!multiSearch.isSearchActive && streaming.buckets.bestRated.length > 0 && (
               <BucketRow title="Best rated">
                 {streaming.buckets.bestRated.map((item, i) => (
                   <StreamingCard key={`${item.media_type}-${item.id}`} item={item} rank={i + 1} onClick={() => handleSelectStreamingItem(item)} />
@@ -138,13 +150,13 @@ export function Dashboard() {
               </BucketRow>
             )}
             <Typography variant="h6" sx={{ mb: 1 }}>
-              All trending
+              {multiSearch.isSearchActive ? 'Search results' : 'All trending'}
             </Typography>
             <StreamingGrid
-              items={streaming.results}
-              loading={streaming.isLoading}
+              items={streamingResults}
+              loading={streaming.isLoading || multiSearch.isSearching}
               onSelectItem={handleSelectStreamingItem}
-              showRank
+              showRank={!multiSearch.isSearchActive}
             />
           </>
         )}

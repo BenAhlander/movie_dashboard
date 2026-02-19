@@ -1,13 +1,15 @@
-# CineDash — Movie Analytics Dashboard
+# FreshTomatoes — Movie Analytics Dashboard
 
 A Netflix-cinematic, responsive React dashboard for **now playing** and **trending** movies with rich visuals, charts, and analytics. Built with Vite, TypeScript, MUI, ECharts, and TanStack Query.
 
 ## Features
 
+- **Dual mode**: Theater (box office/now-playing) and Streaming (trending movies + TV)
 - **Hero** with backdrop, parallax-style motion, film grain, and vignette
 - **Movie grid** with poster cards, rank badges, Audience Score (TMDB) and Hype (momentum proxy)
+- **Search**: Calls the TMDB search API to find any movie or TV show (debounced, 400ms)
 - **Charts**: Top by Momentum (bar), Score vs Momentum (scatter/bubble), Score distribution (histogram)
-- **Filters**: Now Playing / Trending (Day/Week), search, min score slider, sort
+- **Filters**: Search, min score slider, sort, media type (Streaming mode)
 - **Detail drawer**: Poster, overview, genres, cast, directors, runtime, Where to Watch (US)
 - **Demo mode**: Works without an API key by showing local mock data
 
@@ -15,7 +17,7 @@ A Netflix-cinematic, responsive React dashboard for **now playing** and **trendi
 
 - **MODE A (default)**: Uses [TMDB](https://www.themoviedb.org/) only (free API key).
   - **Audience Score (TMDB)**: `vote_average × 10` as a percentage. Shown instead of Rotten Tomatoes in Free mode.
-  - **Hype**: TMDB `popularity` scaled 0–100 as a “Box Office Momentum” proxy (explained in tooltips).
+  - **Hype**: TMDB `popularity` scaled 0–100 as a "Box Office Momentum" proxy (explained in tooltips).
   - **Rating (TMDB)**: Same as Audience Score; IMDb is not used in Free mode.
   - A small tooltip explains why Rotten Tomatoes / IMDb are not shown in Free mode.
 
@@ -60,31 +62,31 @@ Open the URL shown (e.g. `http://localhost:5173`). With a valid key in `.env`, y
 npm run build
 ```
 
-Deploy the `dist` folder to any static host (Vercel, Netlify, etc.). Set **`VITE_TMDB_API_KEY`** in the host’s environment variables so the build embeds it. No serverless or API routes are required for TMDB.
+Deploy the `dist` folder to any static host (Vercel, Netlify, etc.). Set **`VITE_TMDB_API_KEY`** in the host's environment variables so the build embeds it. No serverless or API routes are required for TMDB.
 
 ## Project structure
 
 ```
 /src
-  components/            # Header, Hero, MovieCard, MovieGrid, FiltersBar, ChartPanel, DetailDrawer, StatChip
+  components/            # Header, Hero, MovieCard, MovieGrid, FiltersBar, ChartPanel, DetailDrawer
   pages/                 # Dashboard
-  services/              # tmdbClient (direct TMDB), providers (tmdb, enrichment), mockData
+  services/              # tmdbClient (direct TMDB), providers (tmdb, streaming, enrichment), mockData
+  hooks/                 # useMovies, useMovieDetails, useTheaterMovies, useStreaming, useSearchMovies
   types/
   utils/                 # formatters, scoreScaling, constants, imageUrl
-  hooks/                 # useMovies, useMovieDetails
   theme.ts
 ```
 
-The app calls **TMDB’s REST API directly** from the browser via `src/services/tmdbClient.ts` (list, movie details, credits, watch providers). No backend is required.
+The app calls **TMDB's REST API directly** from the browser via `src/services/tmdbClient.ts` (list, search, movie details, credits, watch providers). No backend is required.
 
 ## Free mode limitations
 
-- **Rotten Tomatoes** and **IMDb** are not available in the default (TMDB-only) setup. The UI shows “Audience Score (TMDB)” and “Rating (TMDB)” with a tooltip explaining this.
-- To show RT/IMDb, you’d need a separate data source (e.g. OMDb) and MODE B support in the app.
+- **Rotten Tomatoes** and **IMDb** are not available in the default (TMDB-only) setup. The UI shows "Audience Score (TMDB)" and "Rating (TMDB)" with a tooltip explaining this.
+- To show RT/IMDb, you'd need a separate data source (e.g. OMDb) and MODE B support in the app.
 
 ## Scripts
 
-- `npm run dev` — Vite dev server (frontend only; demo mode if `/api` is not served)
+- `npm run dev` — Vite dev server
 - `npm run build` — TypeScript + Vite build
 - `npm run preview` — Preview production build
 - `npm run lint` — ESLint

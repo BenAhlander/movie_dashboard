@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CineDash is a Netflix-inspired movie analytics dashboard built with React 19, TypeScript, Vite 7, Material UI 6, Apache ECharts, Framer Motion, and TanStack Query. It fetches data directly from the TMDB REST API in the browser (no backend required). Falls back to mock data in demo mode when no API key is set.
+FreshTomatoes is a Netflix-inspired movie analytics dashboard built with React 19, TypeScript, Vite 7, Material UI 6, Apache ECharts, Framer Motion, and TanStack Query. It fetches data directly from the TMDB REST API in the browser (no backend required). Falls back to mock data in demo mode when no API key is set.
 
 ## Commands
 

@@ -32,7 +32,7 @@ export function Header() {
                 color: 'transparent',
               }}
             >
-              CineDash
+              FreshTomatoes
             </Typography>
           </motion.div>
         </Box>
