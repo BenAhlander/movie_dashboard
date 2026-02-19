@@ -1,6 +1,7 @@
 'use client'
 
 import { Box } from '@mui/material'
+import { Auth0Provider } from '@auth0/nextjs-auth0/client'
 import { Header } from './Header'
 import { ModeSwitcher } from './ModeSwitcher'
 import { DetailDrawer } from './DetailDrawer'
@@ -9,13 +10,24 @@ import {
   useDetailDrawer,
 } from './DetailDrawerContext'
 
-function LayoutShellInner({ children }: { children: React.ReactNode }) {
+interface LayoutShellProps {
+  children: React.ReactNode
+  authEnabled?: boolean
+}
+
+function LayoutShellInner({
+  children,
+  authEnabled,
+}: {
+  children: React.ReactNode
+  authEnabled?: boolean
+}) {
   const { selectedMovieId, setSelectedMovieId, detailMovie, detailLoading } =
     useDetailDrawer()
 
   return (
     <Box sx={{ minHeight: '100vh', pb: 4 }}>
-      <Header />
+      <Header authEnabled={authEnabled} />
       <ModeSwitcher />
       {children}
       <DetailDrawer
@@ -28,10 +40,18 @@ function LayoutShellInner({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function LayoutShell({ children }: { children: React.ReactNode }) {
-  return (
+export function LayoutShell({ children, authEnabled }: LayoutShellProps) {
+  const inner = (
     <DetailDrawerProvider>
-      <LayoutShellInner>{children}</LayoutShellInner>
+      <LayoutShellInner authEnabled={authEnabled}>
+        {children}
+      </LayoutShellInner>
     </DetailDrawerProvider>
   )
+
+  if (authEnabled) {
+    return <Auth0Provider>{inner}</Auth0Provider>
+  }
+
+  return inner
 }

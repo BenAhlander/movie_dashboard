@@ -15,24 +15,38 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
+  Button,
+  Avatar,
+  Menu,
+  MenuItem,
+  Skeleton,
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
 import MovieIcon from '@mui/icons-material/Movie'
 import LiveTvIcon from '@mui/icons-material/LiveTv'
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline'
 import { motion } from 'framer-motion'
 import { alpha } from '@mui/material/styles'
+import { useUser } from '@auth0/nextjs-auth0/client'
 
 const menuItems = [
   { label: 'Theater', path: '/theater', icon: MovieIcon },
   { label: 'Streaming', path: '/streaming', icon: LiveTvIcon },
   { label: 'Feedback', path: '/feedback', icon: ChatBubbleOutlineIcon },
+  { label: 'Profile', path: '/profile', icon: PersonOutlineIcon, authOnly: true },
 ]
 
-export function Header() {
+interface HeaderProps {
+  authEnabled?: boolean
+}
+
+export function Header({ authEnabled }: HeaderProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const pathname = usePathname()
   const router = useRouter()
+  const { user, isLoading } = useUser()
 
   const handleMenuClick = () => {
     setDrawerOpen(true)
@@ -80,7 +94,8 @@ export function Header() {
                 component="span"
                 sx={{
                   fontWeight: 700,
-                  background: 'linear-gradient(90deg, #e50914 0%, #ff6b6b 100%)',
+                  background:
+                    'linear-gradient(90deg, #e50914 0%, #ff6b6b 100%)',
                   backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
                   color: 'transparent',
@@ -90,6 +105,70 @@ export function Header() {
               </Typography>
             </motion.div>
           </Box>
+
+          {authEnabled && (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              {isLoading ? (
+                <Skeleton variant="circular" width={32} height={32} />
+              ) : user ? (
+                <>
+                  <IconButton
+                    onClick={(e) => setAnchorEl(e.currentTarget)}
+                    size="small"
+                  >
+                    <Avatar
+                      src={user.picture ?? undefined}
+                      alt={user.name ?? ''}
+                      sx={{ width: 32, height: 32 }}
+                    />
+                  </IconButton>
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={() => setAnchorEl(null)}
+                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                  >
+                    <MenuItem disabled sx={{ opacity: '1 !important' }}>
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          {user.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {user.email}
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                    <Divider />
+                    <MenuItem
+                      component="a"
+                      href="/auth/logout"
+                      onClick={() => setAnchorEl(null)}
+                    >
+                      Sign out
+                    </MenuItem>
+                  </Menu>
+                </>
+              ) : (
+                <Button
+                  href="/auth/login"
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    borderColor: 'divider',
+                    color: 'text.primary',
+                    textTransform: 'none',
+                    '&:hover': {
+                      borderColor: 'primary.main',
+                      color: 'primary.main',
+                    },
+                  }}
+                >
+                  Sign in
+                </Button>
+              )}
+            </Box>
+          )}
         </Toolbar>
       </AppBar>
       <Drawer
@@ -123,7 +202,9 @@ export function Header() {
           </Typography>
           <Divider sx={{ my: 1 }} />
           <List>
-            {menuItems.map((item) => {
+            {menuItems
+              .filter((item) => !item.authOnly || (authEnabled && user))
+              .map((item) => {
               const Icon = item.icon
               const isActive = pathname.startsWith(item.path)
               return (

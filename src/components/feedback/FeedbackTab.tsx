@@ -11,6 +11,7 @@ import {
   Alert,
 } from '@mui/material'
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
+import { useUser } from '@auth0/nextjs-auth0/client'
 import { FeedbackControlBar } from './FeedbackControlBar'
 import { FeedbackPostCard } from './FeedbackPostCard'
 import { FeedbackForm } from './FeedbackForm'
@@ -53,7 +54,12 @@ const defaultFilters: FeedbackFilters = {
   category: 'all',
 }
 
-export function FeedbackTab() {
+interface FeedbackTabProps {
+  authEnabled?: boolean
+}
+
+export function FeedbackTab({ authEnabled }: FeedbackTabProps) {
+  const { user } = useUser()
   const [posts, setPosts] = useState<FeedbackPost[]>([])
   const [filters, setFilters] = useState<FeedbackFilters>(defaultFilters)
   const [loading, setLoading] = useState(true)
@@ -203,12 +209,20 @@ export function FeedbackTab() {
     }
   }
 
+  const handleNewPost = () => {
+    if (authEnabled && !user) {
+      window.location.href = '/auth/login?returnTo=/feedback'
+      return
+    }
+    setFormOpen(true)
+  }
+
   return (
     <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 }, pt: 2 }}>
       <FeedbackControlBar
         filters={filters}
         onChange={(next) => setFilters((p) => ({ ...p, ...next }))}
-        onNewPost={() => setFormOpen(true)}
+        onNewPost={handleNewPost}
       />
 
       {loading && posts.length === 0 && (
@@ -263,7 +277,7 @@ export function FeedbackTab() {
           <Button
             variant="contained"
             color="primary"
-            onClick={() => setFormOpen(true)}
+            onClick={handleNewPost}
           >
             Create first post
           </Button>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb, hasDatabase } from '@/services/db'
+import { auth0 } from '@/lib/auth0'
 import type { FeedbackCategory, FeedbackSort } from '@/types'
 import crypto from 'crypto'
 
@@ -200,6 +201,16 @@ export async function GET(req: NextRequest) {
 
 /** POST /api/feedback — create a new post */
 export async function POST(req: NextRequest) {
+  if (auth0) {
+    const session = await auth0.getSession()
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+  }
+
   if (!hasDatabase()) {
     return NextResponse.json(
       { error: 'Database not configured' },

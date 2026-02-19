@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeRegistry } from '@/components/ThemeRegistry'
 import { LayoutShell } from '@/components/LayoutShell'
+import { hasAuthEnabled } from '@/lib/hasAuth'
 import '@/index.css'
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ export default function RootLayout({
       </head>
       <body>
         <ThemeRegistry>
-          <LayoutShell>{children}</LayoutShell>
+          <LayoutShell authEnabled={hasAuthEnabled()}>{children}</LayoutShell>
         </ThemeRegistry>
         <Analytics />
       </body>
