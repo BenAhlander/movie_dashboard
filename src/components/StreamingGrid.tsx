@@ -1,7 +1,9 @@
+'use client'
+
 import { Box, Skeleton } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
 import { StreamingCard } from './StreamingCard'
-import type { StreamingListItem } from '../types'
+import type { StreamingListItem } from '@/types'
 
 interface StreamingGridProps {
   items: StreamingListItem[]

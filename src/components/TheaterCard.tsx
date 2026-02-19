@@ -1,12 +1,14 @@
+'use client'
+
 import { Card, CardContent, CardMedia, Typography, Box } from '@mui/material'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import TrendingDownIcon from '@mui/icons-material/TrendingDown'
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat'
 import { motion } from 'framer-motion'
-import { posterUrl } from '../utils/imageUrl'
-import { audienceScorePercent } from '../utils/scoreScaling'
-import { formatDate, formatRevenue } from '../utils/formatters'
-import type { MovieListItem, TrendDirection } from '../types'
+import { posterUrl } from '@/utils/imageUrl'
+import { audienceScorePercent } from '@/utils/scoreScaling'
+import { formatDate, formatRevenue } from '@/utils/formatters'
+import type { MovieListItem, TrendDirection } from '@/types'
 
 interface TheaterCardProps {
   movie: MovieListItem

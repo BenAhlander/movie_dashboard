@@ -1,7 +1,9 @@
+'use client'
+
 import { Box, Skeleton } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TheaterCard } from './TheaterCard'
-import type { MovieListItem, TrendDirection } from '../types'
+import type { MovieListItem, TrendDirection } from '@/types'
 
 interface TheaterGridProps {
   movies: MovieListItem[]

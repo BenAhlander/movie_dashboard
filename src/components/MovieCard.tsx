@@ -1,10 +1,11 @@
+'use client'
+
 import { Card, CardContent, CardMedia, Typography, Box } from '@mui/material'
 import { motion } from 'framer-motion'
-import { posterUrl } from '../utils/imageUrl'
-import { audienceScorePercent } from '../utils/scoreScaling'
-import { scalePopularityToHype } from '../utils/scoreScaling'
+import { posterUrl } from '@/utils/imageUrl'
+import { audienceScorePercent, scalePopularityToHype } from '@/utils/scoreScaling'
 import { StatChip } from './StatChip'
-import type { MovieListItem } from '../types'
+import type { MovieListItem } from '@/types'
 
 interface MovieCardProps {
   movie: MovieListItem

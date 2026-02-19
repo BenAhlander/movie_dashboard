@@ -1,7 +1,9 @@
+'use client'
+
 import { Box, Skeleton } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MovieCard } from './MovieCard'
-import type { MovieListItem } from '../types'
+import type { MovieListItem } from '@/types'
 
 interface MovieGridProps {
   movies: MovieListItem[]

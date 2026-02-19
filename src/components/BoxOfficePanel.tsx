@@ -1,8 +1,10 @@
+'use client'
+
 import { useMemo } from 'react'
 import { Box, Paper, Typography } from '@mui/material'
 import ReactECharts from 'echarts-for-react'
-import type { MovieListItem } from '../types'
-import { formatRevenue, formatDate } from '../utils/formatters'
+import type { MovieListItem } from '@/types'
+import { formatRevenue, formatDate } from '@/utils/formatters'
 
 interface BoxOfficePanelProps {
   movies: MovieListItem[]

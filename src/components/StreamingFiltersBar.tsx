@@ -1,9 +1,11 @@
+'use client'
+
 import { Box, TextField, InputAdornment, FormControl, InputLabel, Select, MenuItem, ToggleButtonGroup, ToggleButton, Collapse } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import { useState } from 'react'
-import type { StreamingFilters, StreamingSort, StreamingTypeFilter, SortDirection } from '../types'
+import type { StreamingFilters, StreamingSort, StreamingTypeFilter, SortDirection } from '@/types'
 
 interface StreamingFiltersBarProps {
   filters: StreamingFilters

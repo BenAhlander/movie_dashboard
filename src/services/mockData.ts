@@ -1,4 +1,4 @@
-import type { MovieListItem, StreamingListItem } from '../types'
+import type { MovieListItem, StreamingListItem } from '@/types'
 
 export const mockMovieList: MovieListItem[] = [
   {

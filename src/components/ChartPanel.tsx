@@ -1,8 +1,10 @@
+'use client'
+
 import { useMemo } from 'react'
 import { Box, Paper, Typography } from '@mui/material'
 import ReactECharts from 'echarts-for-react'
-import type { MovieListItem } from '../types'
-import { scalePopularityToHype, audienceScorePercent } from '../utils/scoreScaling'
+import type { MovieListItem } from '@/types'
+import { scalePopularityToHype, audienceScorePercent } from '@/utils/scoreScaling'
 
 interface ChartPanelProps {
   movies: MovieListItem[]

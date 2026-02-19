@@ -1,9 +1,11 @@
+'use client'
+
 import { Box, Typography, Skeleton } from '@mui/material'
 import { motion } from 'framer-motion'
-import { backdropUrl } from '../utils/imageUrl'
-import { audienceScorePercent } from '../utils/scoreScaling'
-import { formatDate } from '../utils/formatters'
-import type { MovieListItem, StreamingListItem } from '../types'
+import { backdropUrl } from '@/utils/imageUrl'
+import { audienceScorePercent } from '@/utils/scoreScaling'
+import { formatDate } from '@/utils/formatters'
+import type { MovieListItem, StreamingListItem } from '@/types'
 
 type HeroItem = MovieListItem | StreamingListItem
 

@@ -1,3 +1,5 @@
+'use client'
+
 import { Chip, Tooltip, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
 

@@ -1,4 +1,4 @@
-import { TMDB_IMAGE_BASE, TMDB_POSTER_SIZES, TMDB_BACKDROP_SIZES } from './constants'
+import { TMDB_IMAGE_BASE, TMDB_POSTER_SIZES, TMDB_BACKDROP_SIZES } from '@/utils/constants'
 
 export function posterUrl(path: string | null, size: (typeof TMDB_POSTER_SIZES)[number] = 'w342'): string {
   if (!path) return ''

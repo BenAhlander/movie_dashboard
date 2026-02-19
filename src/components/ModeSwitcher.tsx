@@ -1,7 +1,9 @@
+'use client'
+
 import { ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import MovieIcon from '@mui/icons-material/Movie'
 import LiveTvIcon from '@mui/icons-material/LiveTv'
-import type { AppMode } from '../types'
+import type { AppMode } from '@/types'
 
 interface ModeSwitcherProps {
   value: AppMode

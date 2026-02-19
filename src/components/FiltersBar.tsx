@@ -1,3 +1,5 @@
+'use client'
+
 import {
   Box,
   ToggleButtonGroup,
@@ -12,8 +14,8 @@ import {
   Typography,
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
-import type { FilterState, SortField, SortDirection } from '../types'
-import { SORT_OPTIONS } from '../utils/constants'
+import type { FilterState, SortField, SortDirection } from '@/types'
+import { SORT_OPTIONS } from '@/utils/constants'
 
 interface FiltersBarProps {
   filter: FilterState

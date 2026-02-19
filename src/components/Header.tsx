@@ -1,3 +1,5 @@
+'use client'
+
 import { AppBar, Toolbar, Typography, IconButton, Box } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
 import { motion } from 'framer-motion'

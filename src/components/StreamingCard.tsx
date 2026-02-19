@@ -1,9 +1,11 @@
+'use client'
+
 import { Card, CardContent, CardMedia, Typography, Box, Chip } from '@mui/material'
 import { motion } from 'framer-motion'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
-import { posterUrl } from '../utils/imageUrl'
-import { audienceScorePercent } from '../utils/scoreScaling'
-import type { StreamingListItem } from '../types'
+import { posterUrl } from '@/utils/imageUrl'
+import { audienceScorePercent } from '@/utils/scoreScaling'
+import type { StreamingListItem } from '@/types'
 
 interface StreamingCardProps {
   item: StreamingListItem

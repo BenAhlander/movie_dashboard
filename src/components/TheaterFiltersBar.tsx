@@ -1,9 +1,11 @@
+'use client'
+
 import { Box, TextField, InputAdornment, FormControl, InputLabel, Select, MenuItem, Collapse } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import { useState } from 'react'
-import type { TheaterFilters, TheaterSort, SortDirection } from '../types'
+import type { TheaterFilters, TheaterSort, SortDirection } from '@/types'
 
 interface TheaterFiltersBarProps {
   filters: TheaterFilters

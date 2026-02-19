@@ -1,3 +1,5 @@
+'use client'
+
 import {
   Drawer,
   Box,
@@ -8,11 +10,11 @@ import {
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber'
-import { posterUrl, backdropUrl } from '../utils/imageUrl'
-import { formatRuntime, formatDate, formatNumber, formatRevenue, formatCurrency } from '../utils/formatters'
-import { audienceScorePercent } from '../utils/scoreScaling'
-import type { MovieDetail } from '../types'
-import { TMDB_IMAGE_BASE } from '../utils/constants'
+import { posterUrl, backdropUrl } from '@/utils/imageUrl'
+import { formatRuntime, formatDate, formatNumber, formatRevenue, formatCurrency } from '@/utils/formatters'
+import { audienceScorePercent } from '@/utils/scoreScaling'
+import type { MovieDetail } from '@/types'
+import { TMDB_IMAGE_BASE } from '@/utils/constants'
 
 interface DetailDrawerProps {
   open: boolean
