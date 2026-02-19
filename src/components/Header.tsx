@@ -91,7 +91,8 @@ export function Header({ authEnabled }: HeaderProps) {
             >
               <Typography
                 variant="h6"
-                component="span"
+                component="a"
+                href="/theater"
                 sx={{
                   fontWeight: 700,
                   background:
@@ -99,6 +100,8 @@ export function Header({ authEnabled }: HeaderProps) {
                   backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
                   color: 'transparent',
+                  textDecoration: 'none',
+                  cursor: 'pointer',
                 }}
               >
                 FreshTomatoes
