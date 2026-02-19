@@ -1,44 +1,172 @@
 'use client'
 
-import { AppBar, Toolbar, Typography, IconButton, Box } from '@mui/material'
+import { useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  IconButton,
+  Box,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+} from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
+import MovieIcon from '@mui/icons-material/Movie'
+import LiveTvIcon from '@mui/icons-material/LiveTv'
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
 import { motion } from 'framer-motion'
 import { alpha } from '@mui/material/styles'
 
+const menuItems = [
+  { label: 'Theater', path: '/theater', icon: MovieIcon },
+  { label: 'Streaming', path: '/streaming', icon: LiveTvIcon },
+  { label: 'Feedback', path: '/feedback', icon: ChatBubbleOutlineIcon },
+]
+
 export function Header() {
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const pathname = usePathname()
+  const router = useRouter()
+
+  const handleMenuClick = () => {
+    setDrawerOpen(true)
+  }
+
+  const handleDrawerClose = () => {
+    setDrawerOpen(false)
+  }
+
+  const handleNavigation = (path: string) => {
+    router.push(path)
+    setDrawerOpen(false)
+  }
+
   return (
-    <AppBar
-      position="sticky"
-      elevation={0}
-      sx={{
-        backgroundColor: (t) => alpha(t.palette.background.paper, 0.8),
-        backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-      }}
-    >
-      <Toolbar sx={{ justifyContent: 'space-between', py: 0.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <IconButton color="inherit" edge="start" aria-label="menu" sx={{ mr: 0.5 }}>
-            <MenuIcon />
-          </IconButton>
-          <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-            <Typography
-              variant="h6"
-              component="span"
-              sx={{
-                fontWeight: 700,
-                background: 'linear-gradient(90deg, #e50914 0%, #ff6b6b 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                color: 'transparent',
-              }}
+    <>
+      <AppBar
+        position="sticky"
+        elevation={0}
+        sx={{
+          backgroundColor: (t) => alpha(t.palette.background.paper, 0.8),
+          backdropFilter: 'blur(12px)',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <Toolbar sx={{ justifyContent: 'space-between', py: 0.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <IconButton
+              color="inherit"
+              edge="start"
+              aria-label="menu"
+              onClick={handleMenuClick}
+              sx={{ mr: 0.5 }}
             >
-              FreshTomatoes
-            </Typography>
-          </motion.div>
+              <MenuIcon />
+            </IconButton>
+            <motion.div
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Typography
+                variant="h6"
+                component="span"
+                sx={{
+                  fontWeight: 700,
+                  background: 'linear-gradient(90deg, #e50914 0%, #ff6b6b 100%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  color: 'transparent',
+                }}
+              >
+                FreshTomatoes
+              </Typography>
+            </motion.div>
+          </Box>
+        </Toolbar>
+      </AppBar>
+      <Drawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={handleDrawerClose}
+        slotProps={{
+          backdrop: { sx: { backgroundColor: 'rgba(0,0,0,0.8)' } },
+        }}
+        PaperProps={{
+          sx: {
+            width: { xs: 280, sm: 320 },
+            bgcolor: 'background.paper',
+          },
+        }}
+      >
+        <Box sx={{ pt: 2 }}>
+          <Typography
+            variant="h6"
+            sx={{
+              px: 2,
+              pb: 1,
+              fontWeight: 700,
+              background: 'linear-gradient(90deg, #e50914 0%, #ff6b6b 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent',
+            }}
+          >
+            FreshTomatoes
+          </Typography>
+          <Divider sx={{ my: 1 }} />
+          <List>
+            {menuItems.map((item) => {
+              const Icon = item.icon
+              const isActive = pathname.startsWith(item.path)
+              return (
+                <ListItem key={item.path} disablePadding>
+                  <ListItemButton
+                    onClick={() => handleNavigation(item.path)}
+                    selected={isActive}
+                    sx={{
+                      '&.Mui-selected': {
+                        bgcolor: 'rgba(229,9,20,0.08)',
+                        borderLeft: '3px solid',
+                        borderColor: 'primary.main',
+                        '&:hover': {
+                          bgcolor: 'rgba(229,9,20,0.12)',
+                        },
+                      },
+                      '&:hover': {
+                        bgcolor: 'rgba(255,255,255,0.04)',
+                      },
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        color: isActive ? 'primary.main' : 'text.secondary',
+                        minWidth: 40,
+                      }}
+                    >
+                      <Icon />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.label}
+                      primaryTypographyProps={{
+                        fontWeight: isActive ? 600 : 400,
+                        color: isActive ? 'primary.main' : 'text.primary',
+                      }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              )
+            })}
+          </List>
         </Box>
-      </Toolbar>
-    </AppBar>
+      </Drawer>
+    </>
   )
 }

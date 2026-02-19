@@ -4,18 +4,15 @@ import { usePathname, useRouter } from 'next/navigation'
 import { ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import MovieIcon from '@mui/icons-material/Movie'
 import LiveTvIcon from '@mui/icons-material/LiveTv'
-import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
 import type { AppMode } from '@/types'
 
 const routes: { mode: AppMode; path: string }[] = [
   { mode: 'theater', path: '/theater' },
   { mode: 'streaming', path: '/streaming' },
-  { mode: 'feedback', path: '/feedback' },
 ]
 
 function pathToMode(pathname: string): AppMode {
   if (pathname.startsWith('/streaming')) return 'streaming'
-  if (pathname.startsWith('/feedback')) return 'feedback'
   return 'theater'
 }
 
@@ -23,6 +20,13 @@ export function ModeSwitcher() {
   const pathname = usePathname()
   const router = useRouter()
   const current = pathToMode(pathname)
+
+  // Only show tabs on theater or streaming pages
+  const shouldShowTabs = pathname.startsWith('/theater') || pathname.startsWith('/streaming')
+
+  if (!shouldShowTabs) {
+    return null
+  }
 
   return (
     <ToggleButtonGroup
@@ -64,12 +68,6 @@ export function ModeSwitcher() {
         <LiveTvIcon sx={{ mr: 1, fontSize: 20 }} />
         <Typography variant="subtitle1" fontWeight={600}>
           Streaming
-        </Typography>
-      </ToggleButton>
-      <ToggleButton value="feedback">
-        <ChatBubbleOutlineIcon sx={{ mr: 1, fontSize: 20 }} />
-        <Typography variant="subtitle1" fontWeight={600}>
-          Feedback
         </Typography>
       </ToggleButton>
     </ToggleButtonGroup>

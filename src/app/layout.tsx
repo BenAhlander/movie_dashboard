@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Analytics } from '@vercel/analytics/next'
 import { ThemeRegistry } from '@/components/ThemeRegistry'
 import { LayoutShell } from '@/components/LayoutShell'
 import '@/index.css'
@@ -27,6 +28,7 @@ export default function RootLayout({
         <ThemeRegistry>
           <LayoutShell>{children}</LayoutShell>
         </ThemeRegistry>
+        <Analytics />
       </body>
     </html>
   )
