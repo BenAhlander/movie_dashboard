@@ -13,6 +13,7 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material'
+import { useState, useEffect, useRef } from 'react'
 import SearchIcon from '@mui/icons-material/Search'
 import type { FilterState, SortField, SortDirection } from '@/types'
 import { SORT_OPTIONS } from '@/utils/constants'
@@ -23,6 +24,23 @@ interface FiltersBarProps {
 }
 
 export function FiltersBar({ filter, onFilterChange }: FiltersBarProps) {
+  const [searchInput, setSearchInput] = useState(filter.search)
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null)
+
+  useEffect(() => {
+    if (searchInput === filter.search) return
+    debounceRef.current = setTimeout(() => {
+      onFilterChange({ search: searchInput })
+    }, 300)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [searchInput]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    setSearchInput(filter.search)
+  }, [filter.search])
+
   return (
     <Box
       sx={{
@@ -60,8 +78,8 @@ export function FiltersBar({ filter, onFilterChange }: FiltersBarProps) {
       <TextField
         size="small"
         placeholder="Search titles…"
-        value={filter.search}
-        onChange={(e) => onFilterChange({ search: e.target.value })}
+        value={searchInput}
+        onChange={(e) => setSearchInput(e.target.value)}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">

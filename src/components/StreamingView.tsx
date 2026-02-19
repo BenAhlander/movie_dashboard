@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import {
   Box,
   Container,
@@ -18,23 +18,12 @@ import { useDetailDrawer } from './DetailDrawerContext'
 import type { StreamingListItem, StreamingFilters } from '@/types'
 
 const BUCKET_SIZE = 5
-const DEBOUNCE_MS = 400
-
 const defaultStreamingFilters: StreamingFilters = {
   search: '',
   minScore: 0,
   sortBy: 'trending',
   sortDir: 'desc',
   typeFilter: 'all',
-}
-
-function useDebouncedValue<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value)
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delay)
-    return () => clearTimeout(timer)
-  }, [value, delay])
-  return debounced
 }
 
 function filterAndSortStreaming(
@@ -73,16 +62,13 @@ export function StreamingView({
     defaultStreamingFilters,
   )
 
-  const debouncedStreamingSearch = useDebouncedValue(
-    streamingFilters.search.trim(),
-    DEBOUNCE_MS,
-  )
+  const searchTerm = streamingFilters.search.trim()
 
   const [multiSearchResults, setMultiSearchResults] = useState<
     StreamingListItem[]
   >([])
   const [multiSearching, setMultiSearching] = useState(false)
-  const multiSearchActive = debouncedStreamingSearch.length >= 2
+  const multiSearchActive = searchTerm.length >= 2
 
   const isLoading = initialStreaming.length === 0
 
@@ -94,7 +80,7 @@ export function StreamingView({
     let cancelled = false
     setMultiSearching(true)
     fetch(
-      `/api/search?q=${encodeURIComponent(debouncedStreamingSearch)}&type=multi`,
+      `/api/search?q=${encodeURIComponent(searchTerm)}&type=multi`,
     )
       .then((r) => r.json())
       .then((data) => {
@@ -139,7 +125,7 @@ export function StreamingView({
     return () => {
       cancelled = true
     }
-  }, [debouncedStreamingSearch, multiSearchActive])
+  }, [searchTerm, multiSearchActive])
 
   const streamingFiltered = useMemo(
     () => filterAndSortStreaming(initialStreaming, streamingFilters),

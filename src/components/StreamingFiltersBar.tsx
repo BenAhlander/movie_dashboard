@@ -4,7 +4,7 @@ import { Box, TextField, InputAdornment, FormControl, InputLabel, Select, MenuIt
 import SearchIcon from '@mui/icons-material/Search'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { StreamingFilters, StreamingSort, StreamingTypeFilter, SortDirection } from '@/types'
 
 interface StreamingFiltersBarProps {
@@ -14,6 +14,22 @@ interface StreamingFiltersBarProps {
 
 export function StreamingFiltersBar({ filters, onChange }: StreamingFiltersBarProps) {
   const [showMore, setShowMore] = useState(false)
+  const [searchInput, setSearchInput] = useState(filters.search)
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null)
+
+  useEffect(() => {
+    if (searchInput === filters.search) return
+    debounceRef.current = setTimeout(() => {
+      onChange({ search: searchInput })
+    }, 300)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [searchInput]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    setSearchInput(filters.search)
+  }, [filters.search])
 
   return (
     <Box sx={{ py: 1.5 }}>
@@ -21,8 +37,8 @@ export function StreamingFiltersBar({ filters, onChange }: StreamingFiltersBarPr
         <TextField
           size="small"
           placeholder="Search…"
-          value={filters.search}
-          onChange={(e) => onChange({ search: e.target.value })}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">

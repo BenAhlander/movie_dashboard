@@ -1,17 +1,28 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
-import { Box, Container, Alert, Button, Skeleton } from '@mui/material'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { Box, Container, Alert, Button, Skeleton, Typography } from '@mui/material'
 import { Hero } from './Hero'
 import { BucketRow } from './BucketRow'
 import { TheaterCard } from './TheaterCard'
 import { TheaterFiltersBar } from './TheaterFiltersBar'
+import { TheaterGrid } from './TheaterGrid'
 import { BoxOfficePanel } from './BoxOfficePanel'
 import { ChartPanel } from './ChartPanel'
 import { useDetailDrawer } from './DetailDrawerContext'
 import type { MovieListItem, TheaterFilters } from '@/types'
 
 const BUCKET_SIZE = 5
+const DEBOUNCE_MS = 400
+
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay)
+    return () => clearTimeout(timer)
+  }, [value, delay])
+  return debounced
+}
 
 const defaultTheaterFilters: TheaterFilters = {
   search: '',
@@ -57,8 +68,55 @@ export function TheaterView({
   const [theaterFilters, setTheaterFilters] =
     useState<TheaterFilters>(defaultTheaterFilters)
 
-  const movieSearchActive = theaterFilters.search.trim().length >= 2
+  const debouncedSearch = useDebouncedValue(
+    theaterFilters.search.trim(),
+    DEBOUNCE_MS,
+  )
+
+  const [searchResults, setSearchResults] = useState<MovieListItem[]>([])
+  const [searching, setSearching] = useState(false)
+  const movieSearchActive = debouncedSearch.length >= 2
+
   const isLoading = initialTheater.length === 0
+
+  useEffect(() => {
+    if (!movieSearchActive) {
+      setSearchResults([])
+      return
+    }
+    let cancelled = false
+    setSearching(true)
+    fetch(`/api/search?q=${encodeURIComponent(debouncedSearch)}&type=movie`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled) {
+          const items: MovieListItem[] = (data.results ?? []).map(
+            (r: Record<string, unknown>) => ({
+              id: r.id as number,
+              title: r.title as string,
+              poster_path: r.poster_path as string | null,
+              backdrop_path: r.backdrop_path as string | null,
+              release_date: r.release_date as string,
+              vote_average: r.vote_average as number,
+              vote_count: r.vote_count as number,
+              popularity: r.popularity as number,
+              overview: r.overview as string | undefined,
+              genre_ids: r.genre_ids as number[] | undefined,
+            }),
+          )
+          setSearchResults(items)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setSearchResults([])
+      })
+      .finally(() => {
+        if (!cancelled) setSearching(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [debouncedSearch, movieSearchActive])
 
   const theaterFiltered = useMemo(
     () => filterAndSortTheater(initialTheater, theaterFilters),
@@ -207,10 +265,25 @@ export function TheaterView({
             </BucketRow>
           )}
 
-        <Box sx={{ mt: 4 }}>
-          <BoxOfficePanel movies={theaterFiltered} loading={isLoading} />
-          <ChartPanel movies={theaterFiltered} loading={isLoading} />
-        </Box>
+        {movieSearchActive && (
+          <>
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Search results
+            </Typography>
+            <TheaterGrid
+              movies={searchResults}
+              loading={searching}
+              onSelectMovie={handleSelectMovie}
+            />
+          </>
+        )}
+
+        {!movieSearchActive && (
+          <Box sx={{ mt: 4 }}>
+            <BoxOfficePanel movies={theaterFiltered} loading={isLoading} />
+            <ChartPanel movies={theaterFiltered} loading={isLoading} />
+          </Box>
+        )}
       </Container>
     </>
   )
