@@ -27,7 +27,7 @@ function useDebouncedValue<T>(value: T, delay: number): T {
 const defaultTheaterFilters: TheaterFilters = {
   search: '',
   minScore: 0,
-  sortBy: 'revenue',
+  sortBy: 'popularity',
   sortDir: 'desc',
 }
 
@@ -40,8 +40,8 @@ function filterAndSortTheater(
   if (search) out = out.filter((m) => m.title.toLowerCase().includes(search))
   out = out.filter((m) => (m.vote_average ?? 0) * 10 >= f.minScore)
   const dir = f.sortDir === 'asc' ? 1 : -1
-  if (f.sortBy === 'revenue') {
-    out.sort((a, b) => ((b.revenue ?? 0) - (a.revenue ?? 0)) * dir)
+  if (f.sortBy === 'popularity') {
+    out.sort((a, b) => ((b.popularity ?? 0) - (a.popularity ?? 0)) * dir)
   } else if (f.sortBy === 'score') {
     out.sort((a, b) => (b.vote_average - a.vote_average) * dir)
   } else {
@@ -124,9 +124,8 @@ export function TheaterView({
   )
 
   const theaterBuckets = useMemo(() => {
-    const topByRevenue = [...theaterFiltered]
-      .filter((m) => (m.revenue ?? 0) > 0)
-      .sort((a, b) => (b.revenue ?? 0) - (a.revenue ?? 0))
+    const topByPopularity = [...theaterFiltered]
+      .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0))
       .slice(0, BUCKET_SIZE)
     const topByScore = [...theaterFiltered]
       .sort((a, b) => b.vote_average - a.vote_average)
@@ -135,7 +134,7 @@ export function TheaterView({
       .sort((a, b) => (b.vote_count ?? 0) - (a.vote_count ?? 0))
       .slice(0, BUCKET_SIZE)
     return {
-      topBoxOffice: topByRevenue,
+      topBoxOffice: topByPopularity,
       criticsFavorite: topByScore,
       crowdFavorite: topByVoteCount,
     }

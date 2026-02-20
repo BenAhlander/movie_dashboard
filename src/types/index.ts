@@ -107,7 +107,7 @@ export interface FilterState {
 }
 
 /** Theater mode: sort by revenue (box office), score, or release */
-export type TheaterSort = 'revenue' | 'score' | 'release_date'
+export type TheaterSort = 'popularity' | 'score' | 'release_date'
 
 export type TrendDirection = 'up' | 'down' | 'flat'
 

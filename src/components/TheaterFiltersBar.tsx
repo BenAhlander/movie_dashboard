@@ -1,11 +1,11 @@
 'use client'
 
-import { Box, TextField, InputAdornment, FormControl, InputLabel, Select, MenuItem, Collapse } from '@mui/material'
+import { Box, TextField, InputAdornment, Collapse } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import { useState, useEffect, useRef } from 'react'
-import type { TheaterFilters, TheaterSort, SortDirection } from '@/types'
+import type { TheaterFilters, SortDirection } from '@/types'
 
 interface TheaterFiltersBarProps {
   filters: TheaterFilters
@@ -51,18 +51,6 @@ export function TheaterFiltersBar({ filters, onChange }: TheaterFiltersBarProps)
             '& .MuiOutlinedInput-root': { bgcolor: 'rgba(255,255,255,0.04)', borderRadius: 2 },
           }}
         />
-        <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Sort by</InputLabel>
-          <Select
-            value={filters.sortBy}
-            label="Sort by"
-            onChange={(e) => onChange({ sortBy: e.target.value as TheaterSort })}
-          >
-            <MenuItem value="revenue">Weekly box office</MenuItem>
-            <MenuItem value="score">Rating</MenuItem>
-            <MenuItem value="release_date">Release</MenuItem>
-          </Select>
-        </FormControl>
         <Box
           component="button"
           type="button"

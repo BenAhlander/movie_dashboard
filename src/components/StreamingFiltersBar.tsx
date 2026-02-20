@@ -1,11 +1,11 @@
 'use client'
 
-import { Box, TextField, InputAdornment, FormControl, InputLabel, Select, MenuItem, ToggleButtonGroup, ToggleButton, Collapse } from '@mui/material'
+import { Box, TextField, InputAdornment, ToggleButtonGroup, ToggleButton, Collapse } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import { useState, useEffect, useRef } from 'react'
-import type { StreamingFilters, StreamingSort, StreamingTypeFilter, SortDirection } from '@/types'
+import type { StreamingFilters, StreamingTypeFilter, SortDirection } from '@/types'
 
 interface StreamingFiltersBarProps {
   filters: StreamingFilters
@@ -70,17 +70,6 @@ export function StreamingFiltersBar({ filters, onChange }: StreamingFiltersBarPr
           <ToggleButton value="movie">Movie</ToggleButton>
           <ToggleButton value="tv">TV</ToggleButton>
         </ToggleButtonGroup>
-        <FormControl size="small" sx={{ minWidth: 130 }}>
-          <InputLabel>Sort</InputLabel>
-          <Select
-            value={filters.sortBy}
-            label="Sort"
-            onChange={(e) => onChange({ sortBy: e.target.value as StreamingSort })}
-          >
-            <MenuItem value="trending">Trending</MenuItem>
-            <MenuItem value="score">Rating</MenuItem>
-          </Select>
-        </FormControl>
         <Box
           component="button"
           type="button"
