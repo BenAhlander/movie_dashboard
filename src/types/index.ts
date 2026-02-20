@@ -132,7 +132,7 @@ export interface StreamingFilters {
   typeFilter: StreamingTypeFilter
 }
 
-/* -- Feedback types -- */
+/* ── Feedback types ── */
 
 export type FeedbackCategory = 'bug' | 'feature' | 'general'
 export type FeedbackSort = 'new' | 'top'
