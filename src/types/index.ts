@@ -137,6 +137,13 @@ export interface StreamingFilters {
 export type FeedbackCategory = 'bug' | 'feature' | 'general'
 export type FeedbackSort = 'hot' | 'new' | 'top'
 
+export type FeedbackStatus =
+  | 'open'
+  | 'under_review'
+  | 'in_progress'
+  | 'completed'
+  | 'declined'
+
 export interface FeedbackPost {
   id: string
   title: string
@@ -145,8 +152,19 @@ export interface FeedbackPost {
   score: number
   userVote: -1 | 0 | 1
   isOwner?: boolean
+  status?: FeedbackStatus
+  comment_count?: number
   created_at: string
   updated_at: string
+}
+
+export interface FeedbackComment {
+  id: string
+  post_id: string
+  body: string
+  author_id: string | null
+  is_agent_comment: boolean
+  created_at: string
 }
 
 export interface FeedbackFilters {

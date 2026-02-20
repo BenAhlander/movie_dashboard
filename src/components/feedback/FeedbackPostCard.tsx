@@ -15,7 +15,9 @@ import {
   Button,
 } from '@mui/material'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
 import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation'
 import { VoteControl } from './VoteControl'
 import type { FeedbackPost } from '@/types'
 
@@ -56,6 +58,7 @@ export function FeedbackPostCard({
   onDelete,
 }: FeedbackPostCardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const router = useRouter()
 
   return (
     <motion.div
@@ -64,6 +67,7 @@ export function FeedbackPostCard({
       transition={{ duration: 0.25 }}
     >
       <Card
+        onClick={() => router.push(`/feedback/${post.id}`)}
         sx={{
           display: 'flex',
           gap: { xs: 1.5, md: 2 },
@@ -72,6 +76,7 @@ export function FeedbackPostCard({
           background: 'rgba(26,26,26,0.9)',
           border: '1px solid rgba(255,255,255,0.06)',
           transition: 'border-color 0.2s',
+          cursor: 'pointer',
           '&:hover': { borderColor: 'rgba(229,9,20,0.25)' },
         }}
       >
@@ -108,7 +113,10 @@ export function FeedbackPostCard({
             {onDelete && (
               <IconButton
                 size="small"
-                onClick={() => setConfirmOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setConfirmOpen(true)
+                }}
                 sx={{
                   color: 'text.disabled',
                   '&:hover': { color: '#f44336' },
@@ -132,9 +140,27 @@ export function FeedbackPostCard({
           >
             {post.body}
           </Typography>
-          <Typography variant="caption" color="text.disabled">
-            {timeAgo(post.created_at)}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Typography variant="caption" color="text.disabled">
+              {timeAgo(post.created_at)}
+            </Typography>
+            {(post.comment_count ?? 0) > 0 && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                }}
+              >
+                <ChatBubbleOutlineIcon
+                  sx={{ fontSize: 14, color: 'text.disabled' }}
+                />
+                <Typography variant="caption" color="text.disabled">
+                  {post.comment_count}
+                </Typography>
+              </Box>
+            )}
+          </Box>
         </Box>
       </Card>
 
