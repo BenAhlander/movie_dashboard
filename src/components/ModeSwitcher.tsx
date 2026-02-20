@@ -1,6 +1,7 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import MovieIcon from '@mui/icons-material/Movie'
 import LiveTvIcon from '@mui/icons-material/LiveTv'
@@ -20,6 +21,11 @@ export function ModeSwitcher() {
   const pathname = usePathname()
   const router = useRouter()
   const current = pathToMode(pathname)
+
+  useEffect(() => {
+    router.prefetch('/theater')
+    router.prefetch('/streaming')
+  }, [router])
 
   // Only show tabs on theater or streaming pages
   const shouldShowTabs = pathname.startsWith('/theater') || pathname.startsWith('/streaming')
