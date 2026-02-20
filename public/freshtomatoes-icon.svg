@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <!-- Main tomato gradient - rich red -->
+    <radialGradient id="tomatoGrad" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#FF6B6B"/>
+      <stop offset="45%" stop-color="#E53935"/>
+      <stop offset="100%" stop-color="#8B0000"/>
+    </radialGradient>
+
+    <!-- Shine highlight -->
+    <radialGradient id="shineGrad" cx="35%" cy="30%" r="45%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Film strip dark gradient -->
+    <linearGradient id="filmGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a0000"/>
+      <stop offset="100%" stop-color="#0a0000"/>
+    </linearGradient>
+
+    <!-- Drop shadow -->
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+
+    <!-- Glow filter for film strip -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <!-- Clip to tomato shape -->
+    <clipPath id="tomatoClip">
+      <ellipse cx="60" cy="66" rx="42" ry="40"/>
+    </clipPath>
+  </defs>
+
+  <!-- Drop shadow base -->
+  <ellipse cx="60" cy="108" rx="36" ry="6" fill="#000" opacity="0.3"/>
+
+  <!-- ── TOMATO BODY ── -->
+  <ellipse cx="60" cy="66" rx="42" ry="40" fill="url(#tomatoGrad)" filter="url(#shadow)"/>
+
+  <!-- Film strip overlay clipped to tomato -->
+  <g clip-path="url(#tomatoClip)">
+    <!-- Dark film strip band across middle -->
+    <rect x="18" y="56" width="84" height="22" fill="url(#filmGrad)" opacity="0.88"/>
+
+    <!-- Film perforations - left side -->
+    <rect x="21" y="59" width="7" height="5" rx="1" fill="#E53935" opacity="0.9"/>
+    <rect x="21" y="67" width="7" height="5" rx="1" fill="#E53935" opacity="0.9"/>
+
+    <!-- Film perforations - right side -->
+    <rect x="92" y="59" width="7" height="5" rx="1" fill="#E53935" opacity="0.9"/>
+    <rect x="92" y="67" width="7" height="5" rx="1" fill="#E53935" opacity="0.9"/>
+
+    <!-- Film frames - center -->
+    <rect x="33" y="58" width="13" height="15" rx="1" fill="#2a0000" stroke="#E53935" stroke-width="0.8" opacity="0.9"/>
+    <rect x="50" y="58" width="13" height="15" rx="1" fill="#2a0000" stroke="#E53935" stroke-width="0.8" opacity="0.9"/>
+    <rect x="67" y="58" width="13" height="15" rx="1" fill="#2a0000" stroke="#E53935" stroke-width="0.8" opacity="0.9"/>
+
+    <!-- Tiny film content suggestions (abstract lines) -->
+    <line x1="35" y1="62" x2="44" y2="62" stroke="#E53935" stroke-width="1" opacity="0.5"/>
+    <line x1="35" y1="65" x2="41" y2="65" stroke="#E53935" stroke-width="1" opacity="0.5"/>
+    <line x1="35" y1="68" x2="44" y2="68" stroke="#E53935" stroke-width="1" opacity="0.5"/>
+
+    <line x1="52" y1="62" x2="61" y2="62" stroke="#E53935" stroke-width="1" opacity="0.5"/>
+    <line x1="52" y1="65" x2="58" y2="65" stroke="#E53935" stroke-width="1" opacity="0.5"/>
+    <line x1="52" y1="68" x2="61" y2="68" stroke="#E53935" stroke-width="1" opacity="0.5"/>
+
+    <line x1="69" y1="62" x2="78" y2="62" stroke="#E53935" stroke-width="1" opacity="0.5"/>
+    <line x1="69" y1="65" x2="75" y2="65" stroke="#E53935" stroke-width="1" opacity="0.5"/>
+    <line x1="69" y1="68" x2="78" y2="68" stroke="#E53935" stroke-width="1" opacity="0.5"/>
+  </g>
+
+  <!-- Shine / highlight on tomato -->
+  <ellipse cx="60" cy="66" rx="42" ry="40" fill="url(#shineGrad)"/>
+
+  <!-- ── STEM ── -->
+  <!-- Main stem -->
+  <path d="M60 28 Q62 20 60 14" stroke="#2E7D32" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+
+  <!-- Left leaf -->
+  <path d="M60 26 Q50 18 44 22 Q50 28 60 26Z" fill="#388E3C"/>
+  <path d="M60 26 Q52 20 46 23" stroke="#2E7D32" stroke-width="0.8" fill="none" opacity="0.6"/>
+
+  <!-- Right leaf -->
+  <path d="M60 24 Q70 16 76 20 Q70 27 60 24Z" fill="#43A047"/>
+  <path d="M60 24 Q68 18 74 21" stroke="#2E7D32" stroke-width="0.8" fill="none" opacity="0.6"/>
+
+  <!-- Small center leaf -->
+  <path d="M60 22 Q64 14 60 10 Q56 14 60 22Z" fill="#4CAF50"/>
+
+  <!-- Stem base bump -->
+  <ellipse cx="60" cy="27" rx="5" ry="3" fill="#C62828" opacity="0.6"/>
+
+  <!-- ── PLAY BUTTON (subtle, centered in film strip) ── -->
+  <polygon points="56,62 56,72 66,67" fill="#FF6B6B" opacity="0.85"/>
+  <polygon points="56,62 56,72 66,67" fill="none" stroke="#fff" stroke-width="0.5" opacity="0.3"/>
+
+</svg>
