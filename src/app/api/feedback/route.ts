@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { waitUntil } from '@vercel/functions'
 import { getDb, hasDatabase } from '@/services/db'
 import { auth0 } from '@/lib/auth0'
 import type { FeedbackCategory, FeedbackSort } from '@/types'
@@ -242,6 +243,23 @@ export async function POST(req: NextRequest) {
       RETURNING *
     `
     const post = rows[0]
+
+    // Notify agent service to review and comment on the new post
+    if (process.env.AGENT_SERVICE_URL) {
+      const webhookPromise = fetch(
+        `${process.env.AGENT_SERVICE_URL}/webhook/new-feedback`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-webhook-secret': process.env.AGENT_WEBHOOK_SECRET || '',
+          },
+          body: JSON.stringify({ submission_id: post.id }),
+        }
+      ).catch((err) => console.warn('[webhook] new-feedback error:', err.message))
+      waitUntil(webhookPromise)
+    }
+
     return NextResponse.json(
       {
         post: {

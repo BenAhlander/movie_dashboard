@@ -65,6 +65,8 @@ No test runner is configured.
 
 Full API reference is maintained in `API.md` at the project root. When adding, modifying, or removing API routes in `src/app/api/`, update `API.md` to reflect the changes (endpoints, parameters, request/response shapes, error codes, auth requirements).
 
+The feedback agent's available webhook endpoints are documented in `AGENT_API.md`. Refer to it when adding or modifying webhook calls to the agent service (`AGENT_SERVICE_URL`).
+
 ## Code Style
 
 - Prettier: no semicolons, single quotes, 2-space indent, trailing commas (es5)

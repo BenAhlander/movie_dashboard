@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { waitUntil } from '@vercel/functions'
 import { getDb, hasDatabase } from '@/services/db'
 import crypto from 'crypto'
 
@@ -93,43 +92,6 @@ export async function POST(
     const scoreRows =
       await sql`SELECT score FROM feedback_posts WHERE id = ${postId}`
     const newScore = scoreRows[0]?.score ?? 0
-
-    console.log('[vote] newScore:', newScore, 'AGENT_SERVICE_URL:', process.env.AGENT_SERVICE_URL ? 'set' : 'NOT SET')
-
-    // Webhook to agent service on upvote — uses waitUntil so Vercel
-    // keeps the function alive until the fetch completes
-    if (action === 'up' && process.env.AGENT_SERVICE_URL) {
-      console.log('[webhook] firing webhook for upvote on post:', postId)
-      const webhookPromise = sql`SELECT id, title, body, category, status FROM feedback_posts WHERE id = ${postId}`
-        .then(async (postRows) => {
-          if (postRows.length === 0) {
-            console.log('[webhook] no post found for id:', postId)
-            return
-          }
-          const post = postRows[0]
-          const webhookUrl = `${process.env.AGENT_SERVICE_URL}/webhook/feedback`
-          const payload = {
-            id: postId,
-            type: post.category,
-            title: post.title,
-            description: post.body,
-            upvotes: newScore,
-            status: post.status,
-          }
-          console.log('[webhook] POST', webhookUrl, JSON.stringify(payload))
-          const res = await fetch(webhookUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-webhook-secret': process.env.AGENT_WEBHOOK_SECRET || '',
-            },
-            body: JSON.stringify(payload),
-          })
-          console.log('[webhook] response:', res.status, res.statusText)
-        })
-        .catch((err) => console.warn('[webhook] error:', err.message))
-      waitUntil(webhookPromise)
-    }
 
     return NextResponse.json({
       newScore,

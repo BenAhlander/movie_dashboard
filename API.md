@@ -113,6 +113,8 @@ HTML tags are stripped from `title` and `body` for XSS prevention.
 
 **Response:** The created `FeedbackPost` with `score: 0` and `userVote: 0`.
 
+On success, fires a webhook to `AGENT_SERVICE_URL/webhook/new-feedback` (via `waitUntil()`) with `{ submission_id }` so the agent can review and leave a comment.
+
 **Errors:**
 - `401` — Not authenticated
 - `400` — Validation failure (title/body length, invalid category)
@@ -151,8 +153,6 @@ Casts, changes, or removes a vote on a post. Uses SHA256-hashed voter IDs for an
 ```
 
 Idempotent — voting the same direction twice returns the current score without creating duplicates.
-
-On upvote, fires a webhook to `AGENT_SERVICE_URL/webhook/feedback` (via `waitUntil()`) with post metadata.
 
 **Response:**
 ```json
