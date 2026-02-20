@@ -12,8 +12,14 @@ import {
   Snackbar,
   Alert,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { VoteControl } from './VoteControl'
@@ -121,6 +127,11 @@ export function PostDetailView({
   } | null>(null)
   const anonId = useRef('')
 
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
   // Vote state
   const [score, setScore] = useState(post.score)
   const [userVote, setUserVote] = useState<-1 | 0 | 1>(0)
@@ -201,6 +212,61 @@ export function PostDetailView({
     } finally {
       setSubmitting(false)
     }
+  }
+
+  function handleDeleteClick(commentId: string) {
+    setCommentToDelete(commentId)
+    setDeleteDialogOpen(true)
+  }
+
+  function handleDeleteCancel() {
+    setDeleteDialogOpen(false)
+    setCommentToDelete(null)
+  }
+
+  async function handleDeleteConfirm() {
+    if (!commentToDelete) return
+    setDeleting(true)
+
+    // Store the comment for potential rollback
+    const commentIndex = comments.findIndex((c) => c.id === commentToDelete)
+    const deletedComment = comments[commentIndex]
+
+    // Optimistic update - remove comment immediately
+    setComments((prev) => prev.filter((c) => c.id !== commentToDelete))
+    setDeleteDialogOpen(false)
+
+    try {
+      const res = await fetch(
+        `/api/submissions/${post.id}/comments/${commentToDelete}?author_id=${encodeURIComponent(anonId.current)}`,
+        {
+          method: 'DELETE',
+        }
+      )
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'Failed to delete comment')
+      }
+      setToast({ message: 'Comment deleted', severity: 'success' })
+    } catch (e) {
+      // Rollback - restore the comment
+      setComments((prev) => {
+        const newComments = [...prev]
+        newComments.splice(commentIndex, 0, deletedComment)
+        return newComments
+      })
+      setToast({
+        message: e instanceof Error ? e.message : 'Failed to delete comment',
+        severity: 'error',
+      })
+    } finally {
+      setDeleting(false)
+      setCommentToDelete(null)
+    }
+  }
+
+  function isOwnComment(comment: FeedbackComment): boolean {
+    return !!anonId.current && comment.author_id === anonId.current
   }
 
   return (
@@ -315,29 +381,53 @@ export function PostDetailView({
                     : '1px solid rgba(255,255,255,0.06)',
                 }}
               >
-                {comment.is_agent_comment && (
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: 'primary.main',
-                      fontWeight: 600,
-                      display: 'block',
-                      mb: 0.5,
-                    }}
-                  >
-                    🤖 Agent
-                  </Typography>
-                )}
-                <Typography variant="body2" color="text.secondary">
-                  {comment.body}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  color="text.disabled"
-                  sx={{ mt: 0.5, display: 'block' }}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                  }}
                 >
-                  {timeAgo(comment.created_at)}
-                </Typography>
+                  <Box sx={{ flex: 1 }}>
+                    {comment.is_agent_comment && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'primary.main',
+                          fontWeight: 600,
+                          display: 'block',
+                          mb: 0.5,
+                        }}
+                      >
+                        🤖 Agent
+                      </Typography>
+                    )}
+                    <Typography variant="body2" color="text.secondary">
+                      {comment.body}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.disabled"
+                      sx={{ mt: 0.5, display: 'block' }}
+                    >
+                      {timeAgo(comment.created_at)}
+                    </Typography>
+                  </Box>
+                  {isOwnComment(comment) && !comment.is_agent_comment && (
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDeleteClick(comment.id)}
+                      sx={{
+                        color: 'text.disabled',
+                        '&:hover': { color: 'error.main' },
+                        ml: 1,
+                      }}
+                      aria-label="Delete comment"
+                    >
+                      <DeleteOutlineIcon fontSize="small" />
+                    </IconButton>
+                  )}
+                </Box>
               </Card>
             </motion.div>
           ))}
@@ -372,6 +462,35 @@ export function PostDetailView({
           </Button>
         </Box>
       </Box>
+
+      {/* Delete confirmation dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">Delete Comment?</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete this comment? This action cannot be
+            undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel} disabled={deleting}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            disabled={deleting}
+            autoFocus
+          >
+            {deleting ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={toast !== null}
