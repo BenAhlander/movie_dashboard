@@ -50,7 +50,7 @@ function setLocalVote(postId: string, vote: number) {
 }
 
 const defaultFilters: FeedbackFilters = {
-  sortBy: 'hot',
+  sortBy: 'top',
   category: 'all',
 }
 

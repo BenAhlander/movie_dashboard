@@ -5,7 +5,7 @@ import type { FeedbackCategory, FeedbackSort } from '@/types'
 import crypto from 'crypto'
 
 const VALID_CATEGORIES: FeedbackCategory[] = ['bug', 'feature', 'general']
-const VALID_SORTS: FeedbackSort[] = ['hot', 'new', 'top']
+const VALID_SORTS: FeedbackSort[] = ['new', 'top']
 const PAGE_SIZE = 20
 
 function hashVoterId(clientId: string): string {
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
     url.searchParams.get('sort') as FeedbackSort
   )
     ? (url.searchParams.get('sort') as FeedbackSort)
-    : 'hot'
+    : 'top'
   const category = url.searchParams.get('category') || 'all'
   const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10))
   const voterIdRaw = url.searchParams.get('voterId') || ''
@@ -70,22 +70,13 @@ export async function GET(req: NextRequest) {
           ORDER BY p.created_at DESC
           LIMIT ${PAGE_SIZE} OFFSET ${offset}
         `) as PostRow[]
-      } else if (sort === 'top') {
-        rows = (await sql`
-          SELECT p.*, COALESCE(v.vote, 0) as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner, (SELECT COUNT(*) FROM feedback_comments c WHERE c.post_id = p.id) as comment_count
-          FROM feedback_posts p
-          LEFT JOIN feedback_votes v ON v.post_id = p.id AND v.voter_hash = ${voterHash}
-          WHERE p.category = ${category}
-          ORDER BY p.score DESC, p.created_at DESC
-          LIMIT ${PAGE_SIZE} OFFSET ${offset}
-        `) as PostRow[]
       } else {
         rows = (await sql`
           SELECT p.*, COALESCE(v.vote, 0) as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner, (SELECT COUNT(*) FROM feedback_comments c WHERE c.post_id = p.id) as comment_count
           FROM feedback_posts p
           LEFT JOIN feedback_votes v ON v.post_id = p.id AND v.voter_hash = ${voterHash}
           WHERE p.category = ${category}
-          ORDER BY (p.score + 1.0) / POWER(GREATEST(EXTRACT(EPOCH FROM (now() - p.created_at)) / 3600.0, 1.0), 0.5) DESC
+          ORDER BY p.score DESC, p.created_at DESC
           LIMIT ${PAGE_SIZE} OFFSET ${offset}
         `) as PostRow[]
       }
@@ -101,20 +92,12 @@ export async function GET(req: NextRequest) {
           ORDER BY p.created_at DESC
           LIMIT ${PAGE_SIZE} OFFSET ${offset}
         `) as PostRow[]
-      } else if (sort === 'top') {
-        rows = (await sql`
-          SELECT p.*, 0 as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner, (SELECT COUNT(*) FROM feedback_comments c WHERE c.post_id = p.id) as comment_count
-          FROM feedback_posts p
-          WHERE p.category = ${category}
-          ORDER BY p.score DESC, p.created_at DESC
-          LIMIT ${PAGE_SIZE} OFFSET ${offset}
-        `) as PostRow[]
       } else {
         rows = (await sql`
           SELECT p.*, 0 as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner, (SELECT COUNT(*) FROM feedback_comments c WHERE c.post_id = p.id) as comment_count
           FROM feedback_posts p
           WHERE p.category = ${category}
-          ORDER BY (p.score + 1.0) / POWER(GREATEST(EXTRACT(EPOCH FROM (now() - p.created_at)) / 3600.0, 1.0), 0.5) DESC
+          ORDER BY p.score DESC, p.created_at DESC
           LIMIT ${PAGE_SIZE} OFFSET ${offset}
         `) as PostRow[]
       }
@@ -130,20 +113,12 @@ export async function GET(req: NextRequest) {
           ORDER BY p.created_at DESC
           LIMIT ${PAGE_SIZE} OFFSET ${offset}
         `) as PostRow[]
-      } else if (sort === 'top') {
-        rows = (await sql`
-          SELECT p.*, COALESCE(v.vote, 0) as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner, (SELECT COUNT(*) FROM feedback_comments c WHERE c.post_id = p.id) as comment_count
-          FROM feedback_posts p
-          LEFT JOIN feedback_votes v ON v.post_id = p.id AND v.voter_hash = ${voterHash}
-          ORDER BY p.score DESC, p.created_at DESC
-          LIMIT ${PAGE_SIZE} OFFSET ${offset}
-        `) as PostRow[]
       } else {
         rows = (await sql`
           SELECT p.*, COALESCE(v.vote, 0) as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner, (SELECT COUNT(*) FROM feedback_comments c WHERE c.post_id = p.id) as comment_count
           FROM feedback_posts p
           LEFT JOIN feedback_votes v ON v.post_id = p.id AND v.voter_hash = ${voterHash}
-          ORDER BY (p.score + 1.0) / POWER(GREATEST(EXTRACT(EPOCH FROM (now() - p.created_at)) / 3600.0, 1.0), 0.5) DESC
+          ORDER BY p.score DESC, p.created_at DESC
           LIMIT ${PAGE_SIZE} OFFSET ${offset}
         `) as PostRow[]
       }
@@ -158,18 +133,11 @@ export async function GET(req: NextRequest) {
           ORDER BY p.created_at DESC
           LIMIT ${PAGE_SIZE} OFFSET ${offset}
         `) as PostRow[]
-      } else if (sort === 'top') {
-        rows = (await sql`
-          SELECT p.*, 0 as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner, (SELECT COUNT(*) FROM feedback_comments c WHERE c.post_id = p.id) as comment_count
-          FROM feedback_posts p
-          ORDER BY p.score DESC, p.created_at DESC
-          LIMIT ${PAGE_SIZE} OFFSET ${offset}
-        `) as PostRow[]
       } else {
         rows = (await sql`
           SELECT p.*, 0 as user_vote, (p.author_id IS NOT NULL AND p.author_id = ${userId}) as is_owner, (SELECT COUNT(*) FROM feedback_comments c WHERE c.post_id = p.id) as comment_count
           FROM feedback_posts p
-          ORDER BY (p.score + 1.0) / POWER(GREATEST(EXTRACT(EPOCH FROM (now() - p.created_at)) / 3600.0, 1.0), 0.5) DESC
+          ORDER BY p.score DESC, p.created_at DESC
           LIMIT ${PAGE_SIZE} OFFSET ${offset}
         `) as PostRow[]
       }
