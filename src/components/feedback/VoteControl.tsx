@@ -9,9 +9,10 @@ interface VoteControlProps {
   score: number
   userVote: -1 | 0 | 1
   onVote: (direction: 'up' | 'down') => void
+  disabled?: boolean
 }
 
-export function VoteControl({ score, userVote, onVote }: VoteControlProps) {
+export function VoteControl({ score, userVote, onVote, disabled }: VoteControlProps) {
   return (
     <Box
       sx={{
@@ -20,14 +21,19 @@ export function VoteControl({ score, userVote, onVote }: VoteControlProps) {
         alignItems: 'center',
         gap: 0,
         minWidth: 40,
+        opacity: disabled ? 0.6 : 1,
+        transition: 'opacity 0.15s ease',
       }}
     >
-      <motion.div whileTap={{ scale: 0.9 }}>
+      <motion.div whileTap={disabled ? undefined : { scale: 0.9 }}>
         <IconButton
           size="small"
+          disabled={disabled}
           onClick={(e) => {
             e.stopPropagation()
-            onVote('up')
+            if (!disabled) {
+              onVote('up')
+            }
           }}
           sx={{
             color: userVote === 1 ? 'primary.main' : 'text.secondary',
@@ -38,6 +44,10 @@ export function VoteControl({ score, userVote, onVote }: VoteControlProps) {
                 userVote === 1
                   ? 'rgba(229,9,20,0.15)'
                   : 'rgba(255,255,255,0.06)',
+            },
+            '&.Mui-disabled': {
+              color: userVote === 1 ? 'primary.main' : 'text.secondary',
+              opacity: 0.6,
             },
           }}
         >
@@ -56,12 +66,15 @@ export function VoteControl({ score, userVote, onVote }: VoteControlProps) {
       >
         {score}
       </Typography>
-      <motion.div whileTap={{ scale: 0.9 }}>
+      <motion.div whileTap={disabled ? undefined : { scale: 0.9 }}>
         <IconButton
           size="small"
+          disabled={disabled}
           onClick={(e) => {
             e.stopPropagation()
-            onVote('down')
+            if (!disabled) {
+              onVote('down')
+            }
           }}
           sx={{
             color: userVote === -1 ? 'primary.main' : 'text.secondary',
@@ -72,6 +85,10 @@ export function VoteControl({ score, userVote, onVote }: VoteControlProps) {
                 userVote === -1
                   ? 'rgba(229,9,20,0.15)'
                   : 'rgba(255,255,255,0.06)',
+            },
+            '&.Mui-disabled': {
+              color: userVote === -1 ? 'primary.main' : 'text.secondary',
+              opacity: 0.6,
             },
           }}
         >
