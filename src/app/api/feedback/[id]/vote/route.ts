@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { waitUntil } from '@vercel/functions'
 import { getDb, hasDatabase } from '@/services/db'
 import crypto from 'crypto'
 
@@ -95,11 +96,12 @@ export async function POST(
 
     console.log('[vote] newScore:', newScore, 'AGENT_SERVICE_URL:', process.env.AGENT_SERVICE_URL ? 'set' : 'NOT SET')
 
-    // Fire-and-forget webhook to agent service on upvote
+    // Webhook to agent service on upvote — uses waitUntil so Vercel
+    // keeps the function alive until the fetch completes
     if (action === 'up' && process.env.AGENT_SERVICE_URL) {
       console.log('[webhook] firing webhook for upvote on post:', postId)
-      sql`SELECT id, title, body, category, status FROM feedback_posts WHERE id = ${postId}`
-        .then((postRows) => {
+      const webhookPromise = sql`SELECT id, title, body, category, status FROM feedback_posts WHERE id = ${postId}`
+        .then(async (postRows) => {
           if (postRows.length === 0) {
             console.log('[webhook] no post found for id:', postId)
             return
@@ -115,7 +117,7 @@ export async function POST(
             status: post.status,
           }
           console.log('[webhook] POST', webhookUrl, JSON.stringify(payload))
-          fetch(webhookUrl, {
+          const res = await fetch(webhookUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -123,10 +125,10 @@ export async function POST(
             },
             body: JSON.stringify(payload),
           })
-            .then((res) => console.log('[webhook] response:', res.status, res.statusText))
-            .catch((err) => console.error('[webhook] fetch error:', err.message))
+          console.log('[webhook] response:', res.status, res.statusText)
         })
-        .catch((err) => console.error('[webhook] db query error:', err.message))
+        .catch((err) => console.warn('[webhook] error:', err.message))
+      waitUntil(webhookPromise)
     }
 
     return NextResponse.json({
