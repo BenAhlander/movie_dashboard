@@ -61,6 +61,10 @@ No test runner is configured.
 - `src/types/index.ts` — All TypeScript interfaces (MovieListItem, MovieDetail, etc.)
 - `src/theme.ts` — MUI dark cinematic theme (primary: #e50914 Netflix red)
 
+## API Documentation
+
+Full API reference is maintained in `API.md` at the project root. When adding, modifying, or removing API routes in `src/app/api/`, update `API.md` to reflect the changes (endpoints, parameters, request/response shapes, error codes, auth requirements).
+
 ## Code Style
 
 - Prettier: no semicolons, single quotes, 2-space indent, trailing commas (es5)
