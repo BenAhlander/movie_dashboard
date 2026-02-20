@@ -22,6 +22,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
+import ReactMarkdown from 'react-markdown'
 import { VoteControl } from './VoteControl'
 import type { FeedbackComment } from '@/types'
 
@@ -388,7 +389,7 @@ export function PostDetailView({
                     alignItems: 'flex-start',
                   }}
                 >
-                  <Box sx={{ flex: 1 }}>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
                     {comment.is_agent_comment && (
                       <Typography
                         variant="caption"
@@ -402,9 +403,72 @@ export function PostDetailView({
                         🤖 Agent
                       </Typography>
                     )}
-                    <Typography variant="body2" color="text.secondary">
-                      {comment.body}
-                    </Typography>
+                    <Box
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: '0.875rem',
+                        lineHeight: 1.6,
+                        '& p': { m: 0, mb: 1 },
+                        '& p:last-child': { mb: 0 },
+                        '& h2': {
+                          fontSize: '0.95rem',
+                          fontWeight: 600,
+                          color: 'text.primary',
+                          mt: 2,
+                          mb: 0.75,
+                        },
+                        '& h3': {
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          color: 'text.primary',
+                          mt: 1.5,
+                          mb: 0.5,
+                        },
+                        '& ul, & ol': {
+                          pl: 2.5,
+                          my: 0.75,
+                        },
+                        '& li': {
+                          mb: 0.25,
+                        },
+                        '& strong': {
+                          color: 'text.primary',
+                          fontWeight: 600,
+                        },
+                        '& a': {
+                          color: 'primary.main',
+                          textDecoration: 'none',
+                          '&:hover': { textDecoration: 'underline' },
+                        },
+                        '& code': {
+                          bgcolor: 'rgba(255,255,255,0.06)',
+                          px: 0.75,
+                          py: 0.25,
+                          borderRadius: 0.5,
+                          fontSize: '0.8rem',
+                          fontFamily: 'monospace',
+                        },
+                        '& pre': {
+                          bgcolor: 'rgba(255,255,255,0.04)',
+                          border: '1px solid rgba(255,255,255,0.06)',
+                          borderRadius: 1,
+                          p: 1.5,
+                          overflow: 'auto',
+                          my: 1,
+                          '& code': {
+                            bgcolor: 'transparent',
+                            p: 0,
+                          },
+                        },
+                        '& hr': {
+                          border: 'none',
+                          borderTop: '1px solid rgba(255,255,255,0.08)',
+                          my: 1.5,
+                        },
+                      }}
+                    >
+                      <ReactMarkdown>{comment.body}</ReactMarkdown>
+                    </Box>
                     <Typography
                       variant="caption"
                       color="text.disabled"
