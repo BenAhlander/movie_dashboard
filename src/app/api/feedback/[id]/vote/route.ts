@@ -34,6 +34,8 @@ export async function POST(
   const voterId = typeof body.voterId === 'string' ? body.voterId : ''
   const action = body.action as string
 
+  console.log('[vote] postId:', postId, 'action:', action, 'voterId:', voterId)
+
   if (!voterId) {
     return NextResponse.json({ error: 'voterId is required' }, { status: 400 })
   }
@@ -89,8 +91,46 @@ export async function POST(
 
     const scoreRows =
       await sql`SELECT score FROM feedback_posts WHERE id = ${postId}`
+    const newScore = scoreRows[0]?.score ?? 0
+
+    console.log('[vote] newScore:', newScore, 'AGENT_SERVICE_URL:', process.env.AGENT_SERVICE_URL ? 'set' : 'NOT SET')
+
+    // Fire-and-forget webhook to agent service on upvote
+    if (action === 'up' && process.env.AGENT_SERVICE_URL) {
+      console.log('[webhook] firing webhook for upvote on post:', postId)
+      sql`SELECT id, title, body, category, status FROM feedback_posts WHERE id = ${postId}`
+        .then((postRows) => {
+          if (postRows.length === 0) {
+            console.log('[webhook] no post found for id:', postId)
+            return
+          }
+          const post = postRows[0]
+          const webhookUrl = `${process.env.AGENT_SERVICE_URL}/webhook/feedback`
+          const payload = {
+            id: postId,
+            type: post.category,
+            title: post.title,
+            description: post.body,
+            upvotes: newScore,
+            status: post.status,
+          }
+          console.log('[webhook] POST', webhookUrl, JSON.stringify(payload))
+          fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-webhook-secret': process.env.AGENT_WEBHOOK_SECRET || '',
+            },
+            body: JSON.stringify(payload),
+          })
+            .then((res) => console.log('[webhook] response:', res.status, res.statusText))
+            .catch((err) => console.error('[webhook] fetch error:', err.message))
+        })
+        .catch((err) => console.error('[webhook] db query error:', err.message))
+    }
+
     return NextResponse.json({
-      newScore: scoreRows[0]?.score ?? 0,
+      newScore,
     })
   } catch (e) {
     console.error('Vote error:', e)

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb, hasDatabase } from '@/services/db'
+import { validateAgentRequest } from '@/lib/validateAgentRequest'
 
 /** GET /api/submissions/[id]/comments — fetch all comments for a post */
 export async function GET(
@@ -52,10 +53,13 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
+  const isAgent = validateAgentRequest(req) === null
+
   const commentBody = typeof body.body === 'string' ? body.body.trim() : ''
   const authorId = typeof body.author_id === 'string' ? body.author_id : null
-  const isAgentComment = body.is_agent_comment === true
-  const status = typeof body.status === 'string' ? body.status.trim() : null
+  const isAgentComment = isAgent && body.is_agent_comment === true
+  const status =
+    isAgent && typeof body.status === 'string' ? body.status.trim() : null
 
   if (commentBody.length < 1 || commentBody.length > 2000) {
     return NextResponse.json(
