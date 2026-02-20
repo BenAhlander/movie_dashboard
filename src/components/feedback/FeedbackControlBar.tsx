@@ -46,7 +46,6 @@ export function FeedbackControlBar({
             },
           }}
         >
-          <ToggleButton value="hot">Hot</ToggleButton>
           <ToggleButton value="new">New</ToggleButton>
           <ToggleButton value="top">Top</ToggleButton>
         </ToggleButtonGroup>
