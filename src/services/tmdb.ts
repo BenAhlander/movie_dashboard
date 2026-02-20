@@ -45,8 +45,10 @@ async function get<T>(
   return res.json() as Promise<T>
 }
 
-export async function getNowPlaying(): Promise<{ results: MovieListItem[] }> {
-  return get<{ results: MovieListItem[] }>('/movie/now_playing', { page: '1' })
+export async function getNowPlaying(region?: string): Promise<{ results: MovieListItem[] }> {
+  const params: Record<string, string> = { page: '1' }
+  if (region) params.region = region
+  return get<{ results: MovieListItem[] }>('/movie/now_playing', params)
 }
 
 export async function getTrending(

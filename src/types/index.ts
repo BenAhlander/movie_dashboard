@@ -106,29 +106,17 @@ export interface FilterState {
   sortDir: SortDirection
 }
 
-/** Theater mode: sort by revenue (box office), score, or release */
-export type TheaterSort = 'popularity' | 'score' | 'release_date'
-
 export type TrendDirection = 'up' | 'down' | 'flat'
-
-/** Streaming mode: sort by trending (popularity) or score */
-export type StreamingSort = 'trending' | 'score'
 
 /** Streaming filter: all, movie only, tv only */
 export type StreamingTypeFilter = 'all' | 'movie' | 'tv'
 
 export interface TheaterFilters {
   search: string
-  minScore: number
-  sortBy: TheaterSort
-  sortDir: SortDirection
 }
 
 export interface StreamingFilters {
   search: string
-  minScore: number
-  sortBy: StreamingSort
-  sortDir: SortDirection
   typeFilter: StreamingTypeFilter
 }
 

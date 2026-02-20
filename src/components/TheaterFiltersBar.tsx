@@ -1,11 +1,9 @@
 'use client'
 
-import { Box, TextField, InputAdornment, Collapse } from '@mui/material'
+import { Box, TextField, InputAdornment } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import { useState, useEffect, useRef } from 'react'
-import type { TheaterFilters, SortDirection } from '@/types'
+import type { TheaterFilters } from '@/types'
 
 interface TheaterFiltersBarProps {
   filters: TheaterFilters
@@ -13,7 +11,6 @@ interface TheaterFiltersBarProps {
 }
 
 export function TheaterFiltersBar({ filters, onChange }: TheaterFiltersBarProps) {
-  const [showMore, setShowMore] = useState(false)
   const [searchInput, setSearchInput] = useState(filters.search)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null)
 
@@ -51,64 +48,7 @@ export function TheaterFiltersBar({ filters, onChange }: TheaterFiltersBarProps)
             '& .MuiOutlinedInput-root': { bgcolor: 'rgba(255,255,255,0.04)', borderRadius: 2 },
           }}
         />
-        <Box
-          component="button"
-          type="button"
-          onClick={() => setShowMore(!showMore)}
-          aria-label="Toggle filters"
-          aria-expanded={showMore}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.5,
-            border: 0,
-            background: 'none',
-            color: 'text.secondary',
-            cursor: 'pointer',
-            fontSize: '0.875rem',
-            '&:hover': { color: 'text.primary' },
-          }}
-        >
-          {showMore ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          Filters
-        </Box>
       </Box>
-      <Collapse in={showMore}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>Min score</span>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={filters.minScore}
-              onChange={(e) => onChange({ minScore: Number(e.target.value) })}
-              style={{ width: 100 }}
-            />
-            <span style={{ fontSize: '0.75rem' }}>{filters.minScore}%</span>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            {(['desc', 'asc'] as SortDirection[]).map((d) => (
-              <button
-                key={d}
-                type="button"
-                onClick={() => onChange({ sortDir: d })}
-                style={{
-                  padding: '4px 10px',
-                  fontSize: '0.75rem',
-                  border: `1px solid ${filters.sortDir === d ? '#e50914' : 'rgba(255,255,255,0.2)'}`,
-                  borderRadius: 4,
-                  background: filters.sortDir === d ? 'rgba(229,9,20,0.15)' : 'transparent',
-                  color: 'inherit',
-                  cursor: 'pointer',
-                }}
-              >
-                {d === 'desc' ? 'Desc' : 'Asc'}
-              </button>
-            ))}
-          </Box>
-        </Box>
-      </Collapse>
     </Box>
   )
 }

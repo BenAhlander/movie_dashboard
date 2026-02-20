@@ -26,41 +26,18 @@ function useDebouncedValue<T>(value: T, delay: number): T {
 
 const defaultTheaterFilters: TheaterFilters = {
   search: '',
-  minScore: 0,
-  sortBy: 'popularity',
-  sortDir: 'desc',
-}
-
-function filterAndSortTheater(
-  list: MovieListItem[],
-  f: TheaterFilters,
-): MovieListItem[] {
-  let out = [...list]
-  const search = f.search.trim().toLowerCase()
-  if (search) out = out.filter((m) => m.title.toLowerCase().includes(search))
-  out = out.filter((m) => (m.vote_average ?? 0) * 10 >= f.minScore)
-  const dir = f.sortDir === 'asc' ? 1 : -1
-  if (f.sortBy === 'popularity') {
-    out.sort((a, b) => ((b.popularity ?? 0) - (a.popularity ?? 0)) * dir)
-  } else if (f.sortBy === 'score') {
-    out.sort((a, b) => (b.vote_average - a.vote_average) * dir)
-  } else {
-    out.sort(
-      (a, b) =>
-        (b.release_date || '').localeCompare(a.release_date || '') * dir,
-    )
-  }
-  return out
 }
 
 interface TheaterViewProps {
-  initialTheater: MovieListItem[]
+  initialDomestic: MovieListItem[]
+  initialGlobal: MovieListItem[]
   isDemo: boolean
   isApiUnreachable: boolean
 }
 
 export function TheaterView({
-  initialTheater,
+  initialDomestic,
+  initialGlobal,
   isDemo,
   isApiUnreachable,
 }: TheaterViewProps) {
@@ -77,7 +54,7 @@ export function TheaterView({
   const [searching, setSearching] = useState(false)
   const movieSearchActive = debouncedSearch.length >= 2
 
-  const isLoading = initialTheater.length === 0
+  const isLoading = initialDomestic.length === 0
 
   useEffect(() => {
     if (!movieSearchActive) {
@@ -118,29 +95,31 @@ export function TheaterView({
     }
   }, [debouncedSearch, movieSearchActive])
 
-  const theaterFiltered = useMemo(
-    () => filterAndSortTheater(initialTheater, theaterFilters),
-    [initialTheater, theaterFilters],
+  const domesticTop = useMemo(
+    () => initialDomestic.slice(0, BUCKET_SIZE),
+    [initialDomestic],
   )
 
-  const theaterBuckets = useMemo(() => {
-    const topByPopularity = [...theaterFiltered]
-      .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0))
-      .slice(0, BUCKET_SIZE)
-    const topByScore = [...theaterFiltered]
-      .sort((a, b) => b.vote_average - a.vote_average)
-      .slice(0, BUCKET_SIZE)
-    const topByVoteCount = [...theaterFiltered]
-      .sort((a, b) => (b.vote_count ?? 0) - (a.vote_count ?? 0))
-      .slice(0, BUCKET_SIZE)
-    return {
-      topBoxOffice: topByPopularity,
-      criticsFavorite: topByScore,
-      crowdFavorite: topByVoteCount,
-    }
-  }, [theaterFiltered])
+  const globalTop = useMemo(
+    () => initialGlobal.slice(0, BUCKET_SIZE),
+    [initialGlobal],
+  )
 
-  const heroItem = theaterBuckets.topBoxOffice[0] ?? theaterFiltered[0] ?? null
+  const criticsFavorites = useMemo(
+    () => [...initialDomestic]
+      .sort((a, b) => b.vote_average - a.vote_average)
+      .slice(0, BUCKET_SIZE),
+    [initialDomestic],
+  )
+
+  const crowdFavorites = useMemo(
+    () => [...initialDomestic]
+      .sort((a, b) => (b.vote_count ?? 0) - (a.vote_count ?? 0))
+      .slice(0, BUCKET_SIZE),
+    [initialDomestic],
+  )
+
+  const heroItem = domesticTop[0] ?? null
 
   const handleSelectMovie = useCallback(
     (movie: MovieListItem) => setSelectedMovieId(movie.id),
@@ -191,7 +170,7 @@ export function TheaterView({
         />
         {isLoading && !movieSearchActive && (
           <>
-            {['Top box office', "Critics' favorites", 'Crowd favorites'].map(
+            {['Top box office domestic', 'Top box office global', "Critics' favorites", 'Crowd favorites'].map(
               (title) => (
                 <BucketRow key={title} title={title}>
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -223,9 +202,9 @@ export function TheaterView({
         )}
         {!isLoading &&
           !movieSearchActive &&
-          theaterBuckets.topBoxOffice.length > 0 && (
-            <BucketRow title="Top box office">
-              {theaterBuckets.topBoxOffice.map((m, i) => (
+          domesticTop.length > 0 && (
+            <BucketRow title="Top box office domestic">
+              {domesticTop.map((m, i) => (
                 <TheaterCard
                   key={m.id}
                   movie={m}
@@ -237,9 +216,23 @@ export function TheaterView({
           )}
         {!isLoading &&
           !movieSearchActive &&
-          theaterBuckets.criticsFavorite.length > 0 && (
+          globalTop.length > 0 && (
+            <BucketRow title="Top box office global">
+              {globalTop.map((m, i) => (
+                <TheaterCard
+                  key={m.id}
+                  movie={m}
+                  rank={i + 1}
+                  onClick={() => handleSelectMovie(m)}
+                />
+              ))}
+            </BucketRow>
+          )}
+        {!isLoading &&
+          !movieSearchActive &&
+          criticsFavorites.length > 0 && (
             <BucketRow title="Critics' favorites">
-              {theaterBuckets.criticsFavorite.map((m, i) => (
+              {criticsFavorites.map((m, i) => (
                 <TheaterCard
                   key={m.id}
                   movie={m}
@@ -251,9 +244,9 @@ export function TheaterView({
           )}
         {!isLoading &&
           !movieSearchActive &&
-          theaterBuckets.crowdFavorite.length > 0 && (
+          crowdFavorites.length > 0 && (
             <BucketRow title="Crowd favorites">
-              {theaterBuckets.crowdFavorite.map((m, i) => (
+              {crowdFavorites.map((m, i) => (
                 <TheaterCard
                   key={m.id}
                   movie={m}
@@ -279,8 +272,8 @@ export function TheaterView({
 
         {!movieSearchActive && (
           <Box sx={{ mt: 4 }}>
-            <BoxOfficePanel movies={theaterFiltered} loading={isLoading} />
-            <ChartPanel movies={theaterFiltered} loading={isLoading} />
+            <BoxOfficePanel movies={initialDomestic} loading={isLoading} />
+            <ChartPanel movies={initialDomestic} loading={isLoading} />
           </Box>
         )}
       </Container>
