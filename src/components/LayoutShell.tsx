@@ -9,6 +9,7 @@ import {
   DetailDrawerProvider,
   useDetailDrawer,
 } from './DetailDrawerContext'
+import { FavoritesProvider } from './FavoritesContext'
 
 interface LayoutShellProps {
   children: React.ReactNode
@@ -43,9 +44,11 @@ function LayoutShellInner({
 export function LayoutShell({ children, authEnabled }: LayoutShellProps) {
   const inner = (
     <DetailDrawerProvider>
-      <LayoutShellInner authEnabled={authEnabled}>
-        {children}
-      </LayoutShellInner>
+      <FavoritesProvider>
+        <LayoutShellInner authEnabled={authEnabled}>
+          {children}
+        </LayoutShellInner>
+      </FavoritesProvider>
     </DetailDrawerProvider>
   )
 

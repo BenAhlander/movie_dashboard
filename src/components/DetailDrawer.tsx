@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import {
   Drawer,
   Box,
@@ -7,14 +8,22 @@ import {
   IconButton,
   Chip,
   Skeleton,
+  Snackbar,
+  Alert,
+  Button,
+  Link,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
+import FavoriteIcon from '@mui/icons-material/Favorite'
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder'
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber'
 import { posterUrl, backdropUrl } from '@/utils/imageUrl'
 import { formatRuntime, formatDate, formatNumber, formatRevenue, formatCurrency } from '@/utils/formatters'
 import { audienceScorePercent } from '@/utils/scoreScaling'
 import type { MovieDetail } from '@/types'
 import { TMDB_IMAGE_BASE } from '@/utils/constants'
+import { useFavorites } from './FavoritesContext'
+import { useUser } from '@auth0/nextjs-auth0/client'
 
 interface DetailDrawerProps {
   open: boolean
@@ -25,6 +34,30 @@ interface DetailDrawerProps {
 
 export function DetailDrawer({ open, onClose, movie, loading }: DetailDrawerProps) {
   const width = { xs: '100%', sm: 420, md: 480 }
+  const { user } = useUser()
+  const { isFavorite, getFavorite, addFavorite, removeFavorite, canAddMore } =
+    useFavorites()
+  const [snackOpen, setSnackOpen] = useState(false)
+
+  const favorited = movie ? isFavorite(movie.id) : false
+
+  const handleFavoriteClick = async () => {
+    if (!movie) return
+    if (favorited) {
+      const fav = getFavorite(movie.id)
+      if (fav) await removeFavorite(fav.id)
+    } else {
+      if (!canAddMore) {
+        setSnackOpen(true)
+        return
+      }
+      await addFavorite({
+        tmdb_id: movie.id,
+        title: movie.title,
+        poster_path: movie.poster_path,
+      })
+    }
+  }
 
   return (
     <Drawer
@@ -101,6 +134,40 @@ export function DetailDrawer({ open, onClose, movie, loading }: DetailDrawerProp
                 <Chip size="small" label={formatRuntime(movie.runtime)} />
                 <Chip size="small" label={formatDate(movie.release_date)} />
                 <Chip size="small" label={`${formatNumber(movie.vote_count)} votes`} />
+                {user ? (
+                  <Chip
+                    size="small"
+                    icon={
+                      favorited ? (
+                        <FavoriteIcon sx={{ fontSize: 16, color: '#e50914 !important' }} />
+                      ) : (
+                        <FavoriteBorderIcon sx={{ fontSize: 16 }} />
+                      )
+                    }
+                    label={favorited ? 'Favorited' : 'Favorite'}
+                    onClick={handleFavoriteClick}
+                    clickable
+                    variant={favorited ? 'filled' : 'outlined'}
+                    sx={
+                      favorited
+                        ? {
+                            bgcolor: 'rgba(229,9,20,0.15)',
+                            borderColor: '#e50914',
+                            color: '#e50914',
+                          }
+                        : {}
+                    }
+                  />
+                ) : (
+                  <Link
+                    href="/auth/login"
+                    variant="caption"
+                    sx={{ color: 'text.secondary', ml: 0.5, alignSelf: 'center' }}
+                    underline="hover"
+                  >
+                    Sign in to save favorites
+                  </Link>
+                )}
               </Box>
               {movie.genres?.length > 0 && (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
@@ -245,6 +312,28 @@ export function DetailDrawer({ open, onClose, movie, loading }: DetailDrawerProp
           </>
         )}
       </Box>
+      <Snackbar
+        open={snackOpen}
+        autoHideDuration={5000}
+        onClose={() => setSnackOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity="warning"
+          onClose={() => setSnackOpen(false)}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              href="/profile"
+            >
+              Go to Profile
+            </Button>
+          }
+        >
+          You&apos;ve reached your 5 favorites. Remove one from your profile to add a new one.
+        </Alert>
+      </Snackbar>
     </Drawer>
   )
 }

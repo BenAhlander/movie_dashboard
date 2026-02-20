@@ -1,10 +1,26 @@
 'use client'
 
-import { Card, CardContent, CardMedia, Typography, Box, Chip } from '@mui/material'
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import {
+  Card,
+  CardContent,
+  CardMedia,
+  Typography,
+  Box,
+  Chip,
+  IconButton,
+  Snackbar,
+  Alert,
+  Button,
+} from '@mui/material'
+import FavoriteIcon from '@mui/icons-material/Favorite'
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder'
+import { motion, AnimatePresence } from 'framer-motion'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import { posterUrl } from '@/utils/imageUrl'
 import { audienceScorePercent } from '@/utils/scoreScaling'
+import { useFavorites } from './FavoritesContext'
+import { useUser } from '@auth0/nextjs-auth0/client'
 import type { StreamingListItem } from '@/types'
 
 interface StreamingCardProps {
@@ -16,11 +32,40 @@ interface StreamingCardProps {
 export function StreamingCard({ item, rank, onClick }: StreamingCardProps) {
   const poster = posterUrl(item.poster_path, 'w342')
   const score = audienceScorePercent(item.vote_average)
+  const { user } = useUser()
+  const { isFavorite, getFavorite, addFavorite, removeFavorite, canAddMore } =
+    useFavorites()
+  const [hovered, setHovered] = useState(false)
+  const [snackOpen, setSnackOpen] = useState(false)
+
+  const isMovie = item.media_type === 'movie'
+  const favorited = isMovie && isFavorite(item.id)
+  const showHeart = user && isMovie && (hovered || favorited)
+
+  const handleHeartClick = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (favorited) {
+      const fav = getFavorite(item.id)
+      if (fav) await removeFavorite(fav.id)
+    } else {
+      if (!canAddMore) {
+        setSnackOpen(true)
+        return
+      }
+      await addFavorite({
+        tmdb_id: item.id,
+        title: item.title,
+        poster_path: item.poster_path,
+      })
+    }
+  }
 
   return (
     <motion.div
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
       style={{ width: 160, minWidth: 160 }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       <Card
         onClick={onClick}
@@ -69,6 +114,46 @@ export function StreamingCard({ item, rank, onClick }: StreamingCardProps) {
               </Typography>
             </Box>
           )}
+          <AnimatePresence>
+            {showHeart && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                style={{
+                  position: 'absolute',
+                  bottom: 8,
+                  right: 8,
+                  zIndex: 2,
+                }}
+              >
+                <IconButton
+                  size="small"
+                  onClick={handleHeartClick}
+                  sx={{
+                    bgcolor: 'rgba(0,0,0,0.6)',
+                    borderRadius: '50%',
+                    '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
+                    p: 0.5,
+                  }}
+                >
+                  {favorited ? (
+                    <motion.div
+                      key="filled"
+                      animate={{ scale: [1, 1.3, 1] }}
+                      transition={{ duration: 0.3 }}
+                      style={{ display: 'flex' }}
+                    >
+                      <FavoriteIcon sx={{ fontSize: 20, color: '#e50914' }} />
+                    </motion.div>
+                  ) : (
+                    <FavoriteBorderIcon sx={{ fontSize: 20, color: '#fff' }} />
+                  )}
+                </IconButton>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <CardMedia
             component="img"
             height={240}
@@ -91,6 +176,28 @@ export function StreamingCard({ item, rank, onClick }: StreamingCardProps) {
           </Typography>
         </CardContent>
       </Card>
+      <Snackbar
+        open={snackOpen}
+        autoHideDuration={5000}
+        onClose={() => setSnackOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity="warning"
+          onClose={() => setSnackOpen(false)}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              href="/profile"
+            >
+              Go to Profile
+            </Button>
+          }
+        >
+          You&apos;ve reached your 5 favorites. Remove one from your profile to add a new one.
+        </Alert>
+      </Snackbar>
     </motion.div>
   )
 }

@@ -8,9 +8,15 @@ Base URL: `/api`
 
 ### `GET /api/theater`
 
-Fetches the top 20 now-playing movies enriched with revenue, budget, and runtime data.
+Fetches now-playing movies enriched with revenue, budget, and runtime data. Returns both domestic (US region) and global lists, sorted by revenue descending.
 
-**Response:** `MovieListItem[]`
+**Response:**
+```json
+{
+  "domestic": "MovieListItem[]",
+  "global": "MovieListItem[]"
+}
+```
 
 Falls back to mock data when `TMDB_API_KEY` is not set (demo mode). Enrichment is batched at 5 concurrent requests to avoid rate limits.
 
@@ -255,6 +261,97 @@ Deletes a comment. Authors can only delete their own.
 
 **Errors:**
 - `403` — Not the comment author
+
+---
+
+## Favorites Routes
+
+### `GET /api/favorites`
+
+Lists the authenticated user's favorite movies, ordered by `created_at ASC`. Requires Auth0 authentication.
+
+**Response:**
+```json
+{
+  "favorites": [{
+    "id": "uuid",
+    "tmdb_id": 12345,
+    "title": "string",
+    "poster_path": "/path.jpg | null",
+    "created_at": "ISO 8601"
+  }]
+}
+```
+
+**Errors:**
+- `401` — Not authenticated
+
+---
+
+### `POST /api/favorites`
+
+Adds a movie to the user's favorites (max 5). Requires Auth0 authentication.
+
+**Request body:**
+```json
+{
+  "tmdb_id": 12345,
+  "title": "string (non-empty)",
+  "poster_path": "/path.jpg | null"
+}
+```
+
+**Response (201):**
+```json
+{
+  "favorite": {
+    "id": "uuid",
+    "tmdb_id": 12345,
+    "title": "string",
+    "poster_path": "/path.jpg | null",
+    "created_at": "ISO 8601"
+  }
+}
+```
+
+**Errors:**
+- `401` — Not authenticated
+- `400` — Invalid input (missing/invalid tmdb_id or title)
+- `403` — Favorite limit reached (max 5)
+- `409` — Movie already favorited
+
+---
+
+### `DELETE /api/favorites/[id]`
+
+Removes a favorite. Requires Auth0 authentication. Users can only remove their own favorites.
+
+| Param | Type   | Required | Description              |
+| ----- | ------ | -------- | ------------------------ |
+| `id`  | string | yes      | Favorite UUID (path param) |
+
+**Errors:**
+- `401` — Not authenticated
+- `400` — Invalid UUID format
+- `404` — Favorite not found or not owned by user
+
+---
+
+### `GET /api/migrate-favorites`
+
+Runs idempotent schema migration for the `user_favorites` table, index, and 5-favorite limit trigger.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Favorites migration applied"
+}
+```
+
+**Errors:**
+- `503` — Database not configured
+- `500` — Migration failed
 
 ---
 
