@@ -50,12 +50,14 @@ interface FeedbackPostCardProps {
   post: FeedbackPost
   onVote: (postId: string, direction: 'up' | 'down') => void
   onDelete?: (postId: string) => void
+  voting?: boolean
 }
 
 export function FeedbackPostCard({
   post,
   onVote,
   onDelete,
+  voting,
 }: FeedbackPostCardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const router = useRouter()
@@ -84,6 +86,7 @@ export function FeedbackPostCard({
           score={post.score}
           userVote={post.userVote as -1 | 0 | 1}
           onVote={(dir) => onVote(post.id, dir)}
+          disabled={voting}
         />
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Box
