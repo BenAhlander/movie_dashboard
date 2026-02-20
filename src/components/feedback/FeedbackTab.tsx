@@ -70,6 +70,7 @@ export function FeedbackTab({ authEnabled }: FeedbackTabProps) {
   } | null>(null)
   const [hasMore, setHasMore] = useState(false)
   const [page, setPage] = useState(1)
+  const [votingPosts, setVotingPosts] = useState<Set<string>>(new Set())
   const anonId = useRef('')
 
   // Initialize anon ID on mount
@@ -133,6 +134,11 @@ export function FeedbackTab({ authEnabled }: FeedbackTabProps) {
   }
 
   async function handleVote(postId: string, direction: 'up' | 'down') {
+    // Prevent double-voting while a vote is in progress
+    if (votingPosts.has(postId)) {
+      return
+    }
+
     const post = posts.find((p) => p.id === postId)
     if (!post) return
 
@@ -149,6 +155,9 @@ export function FeedbackTab({ authEnabled }: FeedbackTabProps) {
     }
 
     const scoreDelta = newVote - currentVote
+
+    // Mark post as voting in progress
+    setVotingPosts((prev) => new Set(prev).add(postId))
 
     // Optimistic update
     setPosts((prev) =>
@@ -184,6 +193,13 @@ export function FeedbackTab({ authEnabled }: FeedbackTabProps) {
       )
       setLocalVote(postId, currentVote)
       setToast({ message: 'Vote failed. Please try again.', severity: 'error' })
+    } finally {
+      // Clear voting state
+      setVotingPosts((prev) => {
+        const next = new Set(prev)
+        next.delete(postId)
+        return next
+      })
     }
   }
 
@@ -313,6 +329,7 @@ export function FeedbackTab({ authEnabled }: FeedbackTabProps) {
               post={post}
               onVote={handleVote}
               onDelete={post.isOwner ? handleDelete : undefined}
+              voting={votingPosts.has(post.id)}
             />
           ))}
           {hasMore && (
