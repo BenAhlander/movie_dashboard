@@ -26,9 +26,12 @@ import MovieIcon from '@mui/icons-material/Movie'
 import LiveTvIcon from '@mui/icons-material/LiveTv'
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline'
+import DarkModeIcon from '@mui/icons-material/DarkMode'
+import LightModeIcon from '@mui/icons-material/LightMode'
 import { motion } from 'framer-motion'
 import { alpha } from '@mui/material/styles'
 import { useUser } from '@auth0/nextjs-auth0/client'
+import { useThemeMode } from './ThemeContext'
 
 const menuItems = [
   { label: 'Theater', path: '/theater', icon: MovieIcon },
@@ -47,6 +50,7 @@ export function Header({ authEnabled }: HeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { user, isLoading } = useUser()
+  const { mode, toggleTheme } = useThemeMode()
 
   const handleMenuClick = () => {
     setDrawerOpen(true)
@@ -248,6 +252,35 @@ export function Header({ authEnabled }: HeaderProps) {
                 </ListItem>
               )
             })}
+          </List>
+          <Divider sx={{ my: 1 }} />
+          <List>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={toggleTheme}
+                sx={{
+                  '&:hover': {
+                    bgcolor: 'rgba(255,255,255,0.04)',
+                  },
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    color: 'text.secondary',
+                    minWidth: 40,
+                  }}
+                >
+                  {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+                </ListItemIcon>
+                <ListItemText
+                  primary={mode === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                  primaryTypographyProps={{
+                    fontWeight: 400,
+                    color: 'text.primary',
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
           </List>
         </Box>
       </Drawer>
