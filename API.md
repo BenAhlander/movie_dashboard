@@ -264,6 +264,99 @@ Deletes a comment. Authors can only delete their own.
 
 ---
 
+## Polls Routes
+
+### `GET /api/polls`
+
+Lists polls with sorting, status filtering, and pagination (20 per page).
+
+| Param    | Type   | Default | Description                                      |
+| -------- | ------ | ------- | ------------------------------------------------ |
+| `sort`   | string | `new`   | `new` (newest first) or `popular` (most votes)   |
+| `status` | string | `all`   | `all`, `open`, or `closed`                       |
+| `page`   | number | `1`     | Page number (1-indexed)                          |
+| `userId` | string | —       | Auth0 user ID to include user's vote in response |
+
+**Response:**
+```json
+{
+  "results": [{
+    "id": "uuid",
+    "title": "string",
+    "description": "string | null",
+    "status": "open | closed",
+    "expires_at": "ISO 8601 | null",
+    "total_votes": 42,
+    "options": [{
+      "id": "uuid",
+      "option_text": "string",
+      "display_order": 1,
+      "vote_count": 15
+    }],
+    "user_vote": "option-uuid | null",
+    "is_author": false,
+    "author_name": "string | null",
+    "created_at": "ISO 8601"
+  }],
+  "total": 100,
+  "page": 1
+}
+```
+
+Expired polls (`expires_at < now()`) are treated as closed regardless of the `status` column value.
+
+---
+
+### `POST /api/polls`
+
+Creates a new poll. Requires Auth0 authentication.
+
+**Request body:**
+```json
+{
+  "title": "string (10-200 chars)",
+  "description": "string (optional)",
+  "options": ["string (1-100 chars)", "..."],
+  "expires_in": "1d | 3d | 7d | null"
+}
+```
+
+Must include 2-6 options. HTML tags are stripped from all text fields.
+
+**Response (201):** `{ "poll": Poll }` — the created poll object.
+
+**Errors:**
+- `401` — Not authenticated
+- `400` — Validation failure (title length, option count/length)
+- `413` — Request too large
+
+---
+
+### `POST /api/polls/[id]/vote`
+
+Casts a vote on a poll option. Requires Auth0 authentication. Each user can vote once per poll.
+
+| Param | Type   | Required | Description          |
+| ----- | ------ | -------- | -------------------- |
+| `id`  | string | yes      | Poll UUID (path param) |
+
+**Request body:**
+```json
+{
+  "option_id": "uuid"
+}
+```
+
+**Response:** `{ "poll": Poll }` — the updated poll object with vote counts and user's vote.
+
+**Errors:**
+- `401` — Not authenticated
+- `400` — Poll is closed/expired, invalid option, or missing option_id
+- `404` — Poll not found
+- `409` — User has already voted on this poll
+
+---
+
 ## Favorites Routes
 
 ### `GET /api/favorites`
@@ -365,7 +458,7 @@ Runs idempotent schema migrations. Protected by a shared secret.
 | -------- | ------ | -------- | ---------------------------------------- |
 | `secret` | string | yes      | Must match `MIGRATION_SECRET` env var    |
 
-Adds the `status` column to `feedback_posts` and creates the `feedback_comments` table with indexes.
+Adds the `status` column to `feedback_posts`, creates the `feedback_comments` table with indexes, and creates the `polls`, `poll_options`, and `poll_votes` tables with indexes and constraints.
 
 **Errors:**
 - `401` — Missing or invalid secret

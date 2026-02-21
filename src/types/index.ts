@@ -2,7 +2,7 @@ export type MovieListType = 'now_playing' | 'trending'
 export type TrendingWindow = 'day' | 'week'
 
 /** Primary app mode: Theater (box office) vs Streaming (trending) */
-export type AppMode = 'theater' | 'streaming' | 'feedback'
+export type AppMode = 'theater' | 'streaming' | 'feedback' | 'polls'
 
 export type MediaType = 'movie' | 'tv'
 
@@ -164,4 +164,36 @@ export interface FeedbackFormData {
   title: string
   body: string
   category: FeedbackCategory
+}
+
+/* ── Poll types ── */
+
+export type PollStatus = 'open' | 'closed'
+
+export type PollSort = 'new' | 'popular'
+
+export interface PollOption {
+  id: string
+  option_text: string
+  display_order: number
+  vote_count: number
+}
+
+export interface Poll {
+  id: string
+  title: string
+  description: string | null
+  status: PollStatus
+  expires_at: string | null
+  total_votes: number
+  options: PollOption[]
+  user_vote: string | null // option_id the user voted for, or null
+  is_author: boolean
+  author_name: string | null
+  created_at: string
+}
+
+export interface PollFilters {
+  sortBy: PollSort
+  status: PollStatus | 'all'
 }

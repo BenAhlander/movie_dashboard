@@ -50,6 +50,55 @@ export async function POST(req: NextRequest) {
       CREATE INDEX IF NOT EXISTS idx_feedback_comments_post_id ON feedback_comments(post_id)
     `
 
+    // ── Polls tables ──────────────────────────────────────────────────────
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS polls (
+        id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        author_id   VARCHAR(255) NOT NULL,
+        title       VARCHAR(200) NOT NULL,
+        description TEXT,
+        status      VARCHAR(20)  NOT NULL DEFAULT 'open'
+                      CHECK (status IN ('open', 'closed')),
+        expires_at  TIMESTAMPTZ,
+        created_at  TIMESTAMPTZ  NOT NULL DEFAULT now(),
+        updated_at  TIMESTAMPTZ  NOT NULL DEFAULT now()
+      )
+    `
+
+    await sql`CREATE INDEX IF NOT EXISTS idx_polls_created_at ON polls (created_at DESC)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_polls_author_id ON polls (author_id)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_polls_status_created_at ON polls (status, created_at DESC)`
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS poll_options (
+        id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        poll_id       UUID        NOT NULL REFERENCES polls (id) ON DELETE CASCADE,
+        option_text   VARCHAR(200) NOT NULL,
+        display_order SMALLINT    NOT NULL,
+        vote_count    INTEGER     NOT NULL DEFAULT 0,
+        created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+        UNIQUE (poll_id, display_order)
+      )
+    `
+
+    await sql`CREATE INDEX IF NOT EXISTS idx_poll_options_poll_id ON poll_options (poll_id, display_order ASC)`
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS poll_votes (
+        id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        poll_id     UUID        NOT NULL REFERENCES polls (id) ON DELETE CASCADE,
+        option_id   UUID        NOT NULL REFERENCES poll_options (id) ON DELETE CASCADE,
+        user_id     VARCHAR(255) NOT NULL,
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+        UNIQUE (poll_id, user_id)
+      )
+    `
+
+    await sql`CREATE INDEX IF NOT EXISTS idx_poll_votes_poll_user ON poll_votes (poll_id, user_id)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_poll_votes_poll_id ON poll_votes (poll_id)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_poll_votes_option_id ON poll_votes (option_id)`
+
     return NextResponse.json({ success: true, message: 'Migrations applied' })
   } catch (e) {
     console.error('Migration error:', e)

@@ -25,6 +25,7 @@ import MenuIcon from '@mui/icons-material/Menu'
 import MovieIcon from '@mui/icons-material/Movie'
 import LiveTvIcon from '@mui/icons-material/LiveTv'
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
+import PollIcon from '@mui/icons-material/Poll'
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline'
 import { motion } from 'framer-motion'
 import { alpha } from '@mui/material/styles'
@@ -34,6 +35,7 @@ const menuItems = [
   { label: 'Theater', path: '/theater', icon: MovieIcon },
   { label: 'Streaming', path: '/streaming', icon: LiveTvIcon },
   { label: 'Feedback', path: '/feedback', icon: ChatBubbleOutlineIcon },
+  { label: 'Polls', path: '/polls', icon: PollIcon },
   { label: 'Profile', path: '/profile', icon: PersonOutlineIcon, authOnly: true },
 ]
 
