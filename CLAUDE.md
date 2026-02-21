@@ -67,6 +67,53 @@ Full API reference is maintained in `API.md` at the project root. When adding, m
 
 The feedback agent's available webhook endpoints are documented in `AGENT_API.md`. Refer to it when adding or modifying webhook calls to the agent service (`AGENT_SERVICE_URL`).
 
+## Test & Debug IDs
+
+All interactive and key content elements have stable `id` attributes for testing and debugging. When adding new UI components, follow the existing conventions:
+
+- **Naming:** lowercase kebab-case, prefixed by screen/area (e.g., `results-score-value`, `btn-answer-yes`)
+- **Buttons:** prefix with `btn-` (e.g., `btn-keep-playing`, `btn-new-game`)
+- **Screens/containers:** named after the phase or area (e.g., `trivia-game`, `game-board`, `results-screen`, `leaderboard-screen`)
+- **Data attributes:** use `data-*` for dynamic state useful in debugging (e.g., `data-phase`, `data-question-index`, `data-score`, `data-question-id`, `data-difficulty`)
+- **Leaderboard rows:** use `data-testid` for repeated items (e.g., `data-testid="leaderboard-row-1"`)
+
+### Trivia feature IDs
+
+| ID | Element | File |
+|---|---|---|
+| `trivia-game` | Root container | `TriviaGame.tsx` |
+| `game-board` | Playing phase container | `GameBoard.tsx` |
+| `score-label` | "Score:" label | `GameBoard.tsx` |
+| `score-value` | Current score number | `GameBoard.tsx` |
+| `question-counter` | "Question X of Y" text | `GameBoard.tsx` |
+| `question-progress` | Progress bar | `GameBoard.tsx` |
+| `card-stack-container` | Card area wrapper | `GameBoard.tsx` |
+| `card-stack` | Positioned card stack | `CardStack.tsx` |
+| `active-card` | Current swipe card | `SwipeCard.tsx` |
+| `next-card` | Peek card underneath | `SwipeCard.tsx` |
+| `card-title` | Movie/show title on active card | `SwipeCard.tsx` |
+| `card-meta` | Year + media type on active card | `SwipeCard.tsx` |
+| `card-statement` | Trivia statement on active card | `SwipeCard.tsx` |
+| `btn-answer-no` | NO button | `GameBoard.tsx` |
+| `btn-answer-yes` | YES button | `GameBoard.tsx` |
+| `results-screen` | Results phase container | `ResultsScreen.tsx` |
+| `results-round-label` | "Round N Complete" label | `ResultsScreen.tsx` |
+| `results-score-card` | Score card Paper | `ResultsScreen.tsx` |
+| `results-score-value` | Animated score number | `ResultsScreen.tsx` |
+| `results-total-questions` | "/ N" denominator | `ResultsScreen.tsx` |
+| `results-percentage` | Percentage display | `ResultsScreen.tsx` |
+| `results-message` | Score tier message | `ResultsScreen.tsx` |
+| `btn-keep-playing` | Keep Playing button | `ResultsScreen.tsx` |
+| `btn-share-results` | Share Results button | `ResultsScreen.tsx` |
+| `btn-new-game` | New Game button | `ResultsScreen.tsx` |
+| `btn-view-leaderboard` | Leaderboard button | `ResultsScreen.tsx` |
+| `leaderboard-screen` | Leaderboard phase container | `LeaderboardScreen.tsx` |
+| `leaderboard-heading` | "Leaderboard" heading | `LeaderboardScreen.tsx` |
+| `leaderboard-period-toggle` | Today/All time toggle | `LeaderboardScreen.tsx` |
+| `leaderboard-rows` | Rows container | `LeaderboardScreen.tsx` |
+| `btn-back-to-results` | Back to Results button | `LeaderboardScreen.tsx` |
+| `btn-play-again` | Play Again button | `LeaderboardScreen.tsx` |
+
 ## Code Style
 
 - Prettier: no semicolons, single quotes, 2-space indent, trailing commas (es5)
