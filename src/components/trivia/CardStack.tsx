@@ -41,7 +41,7 @@ export function CardStack({
       sx={{
         position: 'relative',
         width: {
-          xs: 'calc(100vw - 32px)',
+          xs: '100%',
           sm: 420,
           md: 440,
         },
@@ -49,7 +49,7 @@ export function CardStack({
         height: { xs: 440, sm: 480, md: 500 },
         mx: 'auto',
         touchAction: 'pan-y',
-        overflow: 'visible',
+        overflow: 'hidden',
       }}
     >
       {/* Next card (underneath) */}

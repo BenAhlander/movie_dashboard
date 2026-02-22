@@ -99,19 +99,21 @@ export function useSwipe({
         return
       }
 
-      // Animate card off screen
+      // Animate card off screen, then reset and advance on completion
       animate(x, exitX, {
         type: 'tween',
         duration: EXIT_DURATION,
         ease: [0.32, 0, 0.67, 0],
+        onComplete: () => {
+          // Brief pause after exit animation for visual feedback, then advance
+          const remainingPause =
+            POST_COMMIT_PAUSE - EXIT_DURATION * 1000
+          setTimeout(() => {
+            x.set(0)
+            onAnimationComplete()
+          }, Math.max(remainingPause, 0))
+        },
       })
-
-      // Flash feedback is handled by the component via the correct return value
-      // After pause, reset and advance
-      setTimeout(() => {
-        x.set(0)
-        onAnimationComplete()
-      }, POST_COMMIT_PAUSE)
 
       // Return correct for flash feedback (the component reads this from onCommit)
       return correct

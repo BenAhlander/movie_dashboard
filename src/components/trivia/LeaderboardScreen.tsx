@@ -186,19 +186,13 @@ export function LeaderboardScreen({
   }, [])
 
   return (
-    <motion.div
+    <Box
       id="leaderboard-screen"
-      initial={reducedMotion ? { opacity: 0 } : { opacity: 0, x: 32 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: 32 }}
-      transition={
-        reducedMotion ? { duration: 0.15 } : { duration: 0.26, ease: 'easeOut' }
-      }
-      style={{
+      sx={{
         width: '100%',
         maxWidth: 480,
-        margin: '0 auto',
-        padding: '0 16px',
+        mx: 'auto',
+        px: 2,
       }}
     >
       {/* Back link */}
@@ -338,6 +332,6 @@ export function LeaderboardScreen({
           Play Again
         </Button>
       </Box>
-    </motion.div>
+    </Box>
   )
 }

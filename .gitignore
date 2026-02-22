@@ -21,6 +21,9 @@ dist-ssr
 # Claude Code
 .claude/
 
+# Tessl
+.tessl/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

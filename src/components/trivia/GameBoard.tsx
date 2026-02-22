@@ -191,6 +191,7 @@ export function GameBoard({
               <AnimatePresence>
                 {showPlusOne && !reducedMotion && (
                   <motion.span
+                    key="plus-one"
                     initial={{ opacity: 1, y: 0 }}
                     animate={{ opacity: 0, y: -20 }}
                     exit={{ opacity: 0 }}
@@ -341,6 +342,7 @@ export function GameBoard({
       <AnimatePresence>
         {flashColor && (
           <motion.div
+            key="flash"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
