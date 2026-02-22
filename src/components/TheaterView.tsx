@@ -1,7 +1,18 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Box, Container, Alert, Button, Skeleton, Typography } from '@mui/material'
+import {
+  Box,
+  Container,
+  Alert,
+  Button,
+  IconButton,
+  Skeleton,
+  Typography,
+} from '@mui/material'
+import SportsEsportsIcon from '@mui/icons-material/SportsEsports'
+import CloseIcon from '@mui/icons-material/Close'
+import Link from 'next/link'
 import { Hero } from './Hero'
 import { BucketRow } from './BucketRow'
 import { TheaterCard } from './TheaterCard'
@@ -130,9 +141,78 @@ export function TheaterView({
     window.location.reload()
   }, [])
 
+  const [bannerDismissed, setBannerDismissed] = useState(false)
+
   return (
     <>
       <Hero item={heroItem} loading={isLoading} />
+
+      {!bannerDismissed && (
+        <Box
+          id="trivia-banner"
+          sx={{
+            position: 'relative',
+            background:
+              'linear-gradient(135deg, rgba(229,9,20,0.15) 0%, rgba(229,9,20,0.05) 100%)',
+            borderBottom: '1px solid rgba(229,9,20,0.2)',
+          }}
+        >
+          <Container
+            maxWidth="xl"
+            sx={{
+              px: { xs: 1, sm: 2 },
+              py: { xs: 1.5, sm: 2 },
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              gap: { xs: 1.5, sm: 2 },
+            }}
+          >
+            <SportsEsportsIcon
+              sx={{ fontSize: 36, color: '#e50914', flexShrink: 0 }}
+            />
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="subtitle1" fontWeight={700}>
+                Test Your Movie Knowledge
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Swipe through true-or-false trivia and see how you rank on the
+                leaderboard.
+              </Typography>
+            </Box>
+            <Button
+              component={Link}
+              href="/trivia"
+              id="btn-trivia-banner"
+              variant="contained"
+              size="small"
+              sx={{
+                bgcolor: '#e50914',
+                '&:hover': { bgcolor: '#b2070f' },
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}
+            >
+              Play Now
+            </Button>
+          </Container>
+          <IconButton
+            id="btn-dismiss-trivia-banner"
+            aria-label="Dismiss trivia banner"
+            onClick={() => setBannerDismissed(true)}
+            size="small"
+            sx={{
+              position: 'absolute',
+              top: 4,
+              right: 4,
+              color: 'text.secondary',
+            }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      )}
+
       <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
         {isDemo && !isApiUnreachable && (
           <Alert
