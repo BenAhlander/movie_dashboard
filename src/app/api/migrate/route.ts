@@ -130,6 +130,154 @@ export async function POST(req: NextRequest) {
         ON trivia_runs (user_id, played_at DESC)
     `
 
+    // ── Trivia questions table (migration 005) ─────────────────────────────
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS trivia_questions (
+        id            TEXT        PRIMARY KEY,
+        media_title   TEXT        NOT NULL,
+        media_type    TEXT        NOT NULL CHECK (media_type IN ('movie', 'tv')),
+        media_year    INTEGER,
+        statement     TEXT        NOT NULL,
+        answer        BOOLEAN     NOT NULL,
+        difficulty    TEXT        NOT NULL DEFAULT 'medium'
+                        CHECK (difficulty IN ('easy', 'medium', 'hard')),
+        category      TEXT,
+        poster_path   TEXT,
+        is_active     BOOLEAN     NOT NULL DEFAULT TRUE,
+        created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_trivia_questions_active_difficulty
+        ON trivia_questions (difficulty)
+        WHERE is_active = TRUE
+    `
+
+    // ── Trivia user answers table ───────────────────────────────────────────
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS trivia_user_answers (
+        id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id       TEXT        NOT NULL,
+        question_id   TEXT        NOT NULL
+                        REFERENCES trivia_questions (id) ON DELETE CASCADE,
+        answered_correctly BOOLEAN,
+        answered_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_trivia_user_answers_user_id_answered_at
+        ON trivia_user_answers (user_id, answered_at DESC)
+    `
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_trivia_user_answers_user_id_question_id
+        ON trivia_user_answers (user_id, question_id)
+    `
+
+    // ── Seed: initial question pool ─────────────────────────────────────────
+
+    await sql`
+      INSERT INTO trivia_questions
+        (id, media_title, media_type, media_year, statement, answer, difficulty)
+      VALUES
+        ('q01', 'The Silence of the Lambs', 'movie', 1991,
+         'This film won the Academy Award for Best Picture.', TRUE, 'easy'),
+        ('q02', 'Pulp Fiction', 'movie', 1994,
+         'This film was directed by Quentin Tarantino.', TRUE, 'easy'),
+        ('q03', 'Titanic', 'movie', 1997,
+         'Leonardo DiCaprio starred in this film.', TRUE, 'easy'),
+        ('q04', 'Friends', 'tv', 1994,
+         'This series ran for 10 seasons.', TRUE, 'easy'),
+        ('q05', 'The Sixth Sense', 'movie', 1999,
+         'This film features the quote "I see dead people."', TRUE, 'easy'),
+        ('q06', 'The Matrix', 'movie', 1999,
+         'Keanu Reeves plays the lead character in this film.', TRUE, 'easy'),
+        ('q07', 'The Sopranos', 'tv', 1999,
+         'This show was created by David Chase.', TRUE, 'medium'),
+        ('q08', 'The Lord of the Rings: The Fellowship of the Ring', 'movie', 2001,
+         'This film is set primarily in New Zealand.', TRUE, 'medium'),
+        ('q09', 'The Dark Knight', 'movie', 2008,
+         'Heath Ledger won a posthumous Oscar for this film.', TRUE, 'easy'),
+        ('q10', 'Toy Story', 'movie', 1995,
+         'This animated film was Pixar''s first feature.', TRUE, 'easy'),
+        ('q11', 'Breaking Bad', 'tv', 2008,
+         'Bryan Cranston plays the lead character in this series.', TRUE, 'easy'),
+        ('q12', 'Schindler''s List', 'movie', 1993,
+         'This film was shot entirely in black and white.', TRUE, 'medium'),
+        ('q13', 'Game of Thrones', 'tv', 2011,
+         'This show is based on a series of novels by George R.R. Martin.', TRUE, 'easy'),
+        ('q14', 'The Matrix', 'movie', 1999,
+         'This film takes place mostly inside a computer simulation.', TRUE, 'easy'),
+        ('q15', 'Parasite', 'movie', 2019,
+         'This film won the Palme d''Or at the Cannes Film Festival.', TRUE, 'medium'),
+        ('q16', 'Joker', 'movie', 2019,
+         'Joaquin Phoenix won the Best Actor Oscar for this film.', TRUE, 'medium'),
+        ('q17', 'Stranger Things', 'tv', 2016,
+         'This series is set in Hawkins, Indiana.', TRUE, 'easy'),
+        ('q18', 'Avengers: Endgame', 'movie', 2019,
+         'This film grossed over $2 billion worldwide.', TRUE, 'medium'),
+        ('q19', 'Breaking Bad', 'tv', 2008,
+         'This show premiered on HBO in 2008.', FALSE, 'hard'),
+        ('q20', 'Inception', 'movie', 2010,
+         'This film was directed by Christopher Nolan.', TRUE, 'easy'),
+        ('q21', 'Gravity', 'movie', 2013,
+         'Sandra Bullock starred in this Oscar-winning film.', TRUE, 'medium'),
+        ('q22', 'Squid Game', 'tv', 2021,
+         'This Korean series became Netflix''s most-watched show in 2021.', TRUE, 'easy'),
+        ('q23', 'The Shawshank Redemption', 'movie', 1994,
+         'This film was directed by Steven Spielberg.', FALSE, 'medium'),
+        ('q24', 'Good Will Hunting', 'movie', 1997,
+         'Tom Hanks starred in this film.', FALSE, 'medium'),
+        ('q25', 'The Wire', 'tv', 2002,
+         'This show aired on NBC.', FALSE, 'medium'),
+        ('q26', 'Inception', 'movie', 2010,
+         'This film is a sequel.', FALSE, 'easy'),
+        ('q27', 'Saving Private Ryan', 'movie', 1998,
+         'This film won the Best Picture Oscar.', FALSE, 'hard'),
+        ('q28', 'Fight Club', 'movie', 1999,
+         'Brad Pitt directed this film.', FALSE, 'medium'),
+        ('q29', 'Silence of the Lambs', 'movie', 1991,
+         'This film is based on a Stephen King novel.', FALSE, 'medium'),
+        ('q30', 'The Office', 'tv', 2005,
+         'This series premiered in the 1990s.', FALSE, 'easy'),
+        ('q31', 'The Dark Knight', 'movie', 2008,
+         'This film was produced by Marvel Studios.', FALSE, 'easy'),
+        ('q32', 'The Grand Budapest Hotel', 'movie', 2014,
+         'This film takes place in the future.', FALSE, 'easy'),
+        ('q33', 'The Sopranos', 'tv', 1999,
+         'This show was created by Vince Gilligan.', FALSE, 'hard'),
+        ('q34', 'Finding Nemo', 'movie', 2003,
+         'This animated film was made by DreamWorks.', FALSE, 'easy'),
+        ('q35', 'Black Swan', 'movie', 2010,
+         'Meryl Streep appears in this film.', FALSE, 'medium'),
+        ('q36', 'The Lion King', 'movie', 1994,
+         'This film is rated G.', FALSE, 'hard'),
+        ('q37', 'Breaking Bad', 'tv', 2008,
+         'This series has more than 8 seasons.', FALSE, 'easy'),
+        ('q38', 'Gladiator', 'movie', 2000,
+         'This film was released before 2000.', FALSE, 'hard'),
+        ('q39', 'The Social Network', 'movie', 2010,
+         'This film is set in Los Angeles.', FALSE, 'medium'),
+        ('q40', 'Django Unchained', 'movie', 2012,
+         'Will Smith starred in this film.', FALSE, 'medium'),
+        ('q41', 'Stranger Things', 'tv', 2016,
+         'This show premiered on Amazon Prime Video.', FALSE, 'easy'),
+        ('q42', 'Interstellar', 'movie', 2014,
+         'This film is a remake of a 1960s movie.', FALSE, 'easy'),
+        ('q43', 'The Revenant', 'movie', 2015,
+         'This film features time travel as a plot device.', FALSE, 'easy'),
+        ('q44', 'Game of Thrones', 'tv', 2011,
+         'This series is a Netflix original.', FALSE, 'easy'),
+        ('q45', 'No Country for Old Men', 'movie', 2007,
+         'This film was directed by Martin Scorsese.', FALSE, 'medium')
+      ON CONFLICT (id) DO NOTHING
+    `
+
     return NextResponse.json({ success: true, message: 'Migrations applied' })
   } catch (e) {
     console.error('Migration error:', e)

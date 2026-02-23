@@ -467,6 +467,76 @@ Adds the `status` column to `feedback_posts`, creates the `feedback_comments` ta
 
 ## Trivia Routes
 
+### `GET /api/trivia/questions`
+
+Returns a randomised set of questions for one game round. The endpoint excludes
+questions supplied via `excludeIds` (client-tracked IDs from the current
+session) and, for authenticated users, any questions they have answered within
+the configured recency window (default: last 30 days).
+
+**Authentication:** Optional (Auth0 session). Unauthenticated requests receive
+a shuffled random sample. Authenticated requests additionally exclude questions
+the user has recently answered (looked up via `trivia_user_answers`).
+
+**Query parameters:**
+
+| Param        | Type   | Default | Description                                         |
+| ------------ | ------ | ------- | --------------------------------------------------- |
+| `count`      | number | `5`     | Number of questions to return (1–20)                |
+| `excludeIds` | string | —       | Comma-separated question IDs to exclude (client list) |
+| `difficulty` | string | —       | Filter pool to `easy`, `medium`, or `hard`          |
+
+**Request headers:**
+
+None beyond standard Next.js session cookies for optional Auth0 authentication.
+
+**Response (200):**
+
+```typescript
+interface QuestionsResponse {
+  questions: TriviaQuestion[]
+  // IDs of all questions excluded for this user in this response.
+  // The client should union these with its own usedQuestionIds to
+  // keep its local exclusion list in sync.
+  excludedIds: string[]
+  // True when POSTGRES_URL is not set or the question table is empty,
+  // signalling the client to fall back to mockQuestions.ts.
+  demo?: boolean
+}
+
+interface TriviaQuestion {
+  id: string
+  statement: string
+  answer: boolean
+  title: string          // maps to trivia_questions.media_title
+  year: number           // maps to trivia_questions.media_year
+  mediaType: 'movie' | 'tv'
+  posterPath?: string | null
+  difficulty?: 'easy' | 'medium' | 'hard'
+}
+```
+
+**Pool exhaustion behaviour:** When the pool of unseen questions is smaller
+than `count` after applying all exclusions, the endpoint resets the user-level
+exclusion (ignores `trivia_user_answers`) and draws from the full active pool,
+still respecting the client-supplied `excludeIds` for the current session.
+This mirrors the existing client-side reset logic in `getQuestions()`.
+
+**Side effects:** None. This endpoint is read-only. Recording that a user has
+answered a question is the responsibility of `POST /api/trivia/runs` (or a
+dedicated `POST /api/trivia/answers` endpoint — see `BACKEND_GAPS.md`).
+
+**Errors:**
+- `400` — `count` out of range or invalid `difficulty` value
+- `500` — DB query failed
+- `503` — Database not configured (returns `{ demo: true, questions: [] }`)
+
+**Used by:** `src/lib/trivia/gameApi.ts` `getQuestions()` (currently uses
+client-side mock; this endpoint replaces it). Called from `src/hooks/useGame.ts`
+on `START` and `CONTINUE` actions.
+
+---
+
 ### `POST /api/trivia/runs`
 
 Saves a completed trivia game run for the authenticated user. Returns the run's UUID and the user's new rank in the "today" period.

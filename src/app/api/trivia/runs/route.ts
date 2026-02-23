@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
 
   const score = typeof body.score === 'number' ? body.score : NaN
   const total = typeof body.total === 'number' ? body.total : NaN
+  const questionIds = Array.isArray(body.questionIds) ? body.questionIds : []
 
   // 4. Validate
   if (
@@ -109,6 +110,27 @@ export async function POST(req: NextRequest) {
       { error: 'Failed to submit run' },
       { status: 500 }
     )
+  }
+
+  // 6b. Record answered questions in trivia_user_answers
+  if (questionIds.length > 0) {
+    try {
+      // Filter to only valid string IDs
+      const validIds = (questionIds as unknown[]).filter(
+        (id): id is string => typeof id === 'string' && id.length > 0
+      )
+      if (validIds.length > 0) {
+        for (const qId of validIds) {
+          await sql`
+            INSERT INTO trivia_user_answers (user_id, question_id)
+            VALUES (${userId}, ${qId})
+          `
+        }
+      }
+    } catch (e) {
+      // Non-fatal — the run was already saved successfully
+      console.warn('Failed to record answered questions:', e)
+    }
   }
 
   // 7. Compute rank in 'today' period

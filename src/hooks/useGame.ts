@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useReducer, useRef } from 'react'
+import { useCallback, useEffect, useReducer, useRef } from 'react'
 import type {
   GameState,
   GamePhase,
@@ -18,16 +18,16 @@ const LOCAL_STORAGE_KEY = 'trivia_sessions'
 type GameAction =
   | { type: 'START' }
   | { type: 'CONTINUE' }
+  | { type: 'QUESTIONS_LOADED'; questions: GameState['questions'] }
   | { type: 'ANSWER'; correct: boolean }
   | { type: 'SHOW_RESULTS' }
   | { type: 'SHOW_LEADERBOARD' }
   | { type: 'BACK_TO_RESULTS' }
 
 function createInitialState(): GameState {
-  const questions = getQuestions()
   return {
     phase: 'playing',
-    questions,
+    questions: [],
     currentIndex: 0,
     score: 0,
     roundScore: 0,
@@ -35,7 +35,7 @@ function createInitialState(): GameState {
     totalQuestions: QUESTIONS_PER_ROUND,
     totalAnswered: 0,
     roundNumber: 1,
-    usedQuestionIds: questions.map((q) => q.id),
+    usedQuestionIds: [],
   }
 }
 
@@ -45,20 +45,25 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return createInitialState()
 
     case 'CONTINUE': {
-      // Keep cumulative score, load next round of questions
-      const newQuestions = getQuestions(state.usedQuestionIds)
       return {
         ...state,
         phase: 'playing',
-        questions: newQuestions,
+        questions: [],
         currentIndex: 0,
         roundScore: 0,
         answers: [],
         totalQuestions: QUESTIONS_PER_ROUND,
         roundNumber: state.roundNumber + 1,
+      }
+    }
+
+    case 'QUESTIONS_LOADED': {
+      return {
+        ...state,
+        questions: action.questions,
         usedQuestionIds: [
           ...state.usedQuestionIds,
-          ...newQuestions.map((q) => q.id),
+          ...action.questions.map((q) => q.id),
         ],
       }
     }
@@ -168,6 +173,25 @@ export function useGame(isAuthenticated = false) {
   // Store the latest submit result so it can be read by ResultsScreen
   const lastSubmitResult = useRef<SubmitRunResponse>({ saved: false })
 
+  // Track whether we need to load questions (on mount, START, CONTINUE)
+  const needsQuestions =
+    state.phase === 'playing' && state.questions.length === 0
+
+  useEffect(() => {
+    if (!needsQuestions) return
+
+    let cancelled = false
+    getQuestions(state.usedQuestionIds).then((questions) => {
+      if (!cancelled) {
+        dispatch({ type: 'QUESTIONS_LOADED', questions })
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [needsQuestions, state.usedQuestionIds])
+
   const answer = useCallback(
     (userAnswer: boolean) => {
       const currentQuestion = state.questions[state.currentIndex]
@@ -183,12 +207,16 @@ export function useGame(isAuthenticated = false) {
         const finalRoundScore = correct
           ? state.roundScore + 1
           : state.roundScore
+        const questionIds = state.questions.map((q) => q.id)
         // Fire and forget — the result is stored in the ref for later use
-        submitRun(finalRoundScore, state.totalQuestions, isAuthenticated).then(
-          (result) => {
-            lastSubmitResult.current = result
-          }
-        )
+        submitRun(
+          finalRoundScore,
+          state.totalQuestions,
+          isAuthenticated,
+          questionIds
+        ).then((result) => {
+          lastSubmitResult.current = result
+        })
         saveSession(state.score + (correct ? 1 : 0))
       }
 

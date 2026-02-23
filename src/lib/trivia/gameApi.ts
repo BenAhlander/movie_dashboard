@@ -5,33 +5,24 @@ import type {
   ScoreTier,
   SubmitRunResponse,
 } from '@/types/trivia'
-import { triviaQuestions } from './mockQuestions'
-
 
 export const QUESTIONS_PER_ROUND = 5
 
-/** Fisher-Yates shuffle */
-function shuffle<T>(array: T[]): T[] {
-  const copy = [...array]
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy
-}
-
 /**
  * Get a shuffled set of questions for a game round.
- * Excludes questions with IDs in the excludeIds set to avoid repeats.
- * In a future version this would call an API endpoint.
+ * Calls the backend API which serves from the DB (or mock data in demo mode).
  */
-export function getQuestions(excludeIds: string[] = []): TriviaQuestion[] {
-  const excludeSet = new Set(excludeIds)
-  const available = triviaQuestions.filter((q) => !excludeSet.has(q.id))
-  // If we've used most questions, reset the pool
-  const pool =
-    available.length >= QUESTIONS_PER_ROUND ? available : triviaQuestions
-  return shuffle(pool).slice(0, QUESTIONS_PER_ROUND)
+export async function getQuestions(
+  excludeIds: string[] = []
+): Promise<TriviaQuestion[]> {
+  const params = new URLSearchParams({ count: String(QUESTIONS_PER_ROUND) })
+  if (excludeIds.length > 0) {
+    params.set('excludeIds', excludeIds.join(','))
+  }
+  const res = await fetch(`/api/trivia/questions?${params.toString()}`)
+  if (!res.ok) throw new Error(`API returned ${res.status}`)
+  const data = await res.json()
+  return (data.questions ?? []) as TriviaQuestion[]
 }
 
 /** API response shape from GET /api/trivia/leaderboard */
@@ -52,7 +43,8 @@ interface LeaderboardApiRow {
 export async function submitRun(
   score: number,
   total: number,
-  isAuthenticated: boolean
+  isAuthenticated: boolean,
+  questionIds: string[] = []
 ): Promise<SubmitRunResponse> {
   if (!isAuthenticated) return { saved: false }
 
@@ -60,7 +52,7 @@ export async function submitRun(
     const res = await fetch('/api/trivia/runs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ score, total }),
+      body: JSON.stringify({ score, total, questionIds }),
     })
     if (!res.ok) {
       console.warn('submitRun failed:', res.status, await res.text())
