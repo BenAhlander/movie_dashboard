@@ -99,6 +99,37 @@ export async function POST(req: NextRequest) {
     await sql`CREATE INDEX IF NOT EXISTS idx_poll_votes_poll_id ON poll_votes (poll_id)`
     await sql`CREATE INDEX IF NOT EXISTS idx_poll_votes_option_id ON poll_votes (option_id)`
 
+    // ── Trivia runs table ───────────────────────────────────────────────────
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS trivia_runs (
+        id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id     TEXT        NOT NULL,
+        username    TEXT        NOT NULL,
+        avatar_url  TEXT,
+        score       INTEGER     NOT NULL CHECK (score >= 0),
+        total       INTEGER     NOT NULL CHECK (total >= 1),
+        pct         NUMERIC(5,2) NOT NULL CHECK (pct >= 0 AND pct <= 100),
+        CONSTRAINT trivia_runs_score_lte_total CHECK (score <= total),
+        played_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_trivia_runs_user_id_pct
+        ON trivia_runs (user_id, pct DESC, score DESC)
+    `
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_trivia_runs_played_at
+        ON trivia_runs (played_at DESC)
+    `
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_trivia_runs_user_id_played_at
+        ON trivia_runs (user_id, played_at DESC)
+    `
+
     return NextResponse.json({ success: true, message: 'Migrations applied' })
   } catch (e) {
     console.error('Migration error:', e)

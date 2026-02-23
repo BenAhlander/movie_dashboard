@@ -458,7 +458,107 @@ Runs idempotent schema migrations. Protected by a shared secret.
 | -------- | ------ | -------- | ---------------------------------------- |
 | `secret` | string | yes      | Must match `MIGRATION_SECRET` env var    |
 
-Adds the `status` column to `feedback_posts`, creates the `feedback_comments` table with indexes, and creates the `polls`, `poll_options`, and `poll_votes` tables with indexes and constraints.
+Adds the `status` column to `feedback_posts`, creates the `feedback_comments` table with indexes, creates the `polls`, `poll_options`, and `poll_votes` tables with indexes and constraints, and creates the `trivia_runs` table with indexes for the trivia leaderboard.
 
 **Errors:**
 - `401` — Missing or invalid secret
+
+---
+
+## Trivia Routes
+
+### `POST /api/trivia/runs`
+
+Saves a completed trivia game run for the authenticated user. Returns the run's UUID and the user's new rank in the "today" period.
+
+**Authentication:** Required (Auth0 session).
+
+**Request body:**
+```json
+{
+  "score": 14,
+  "total": 20
+}
+```
+
+- `score` — non-negative integer, correct answers in the session
+- `total` — positive integer, total questions answered (`score <= total`)
+
+**Response (201):**
+```json
+{
+  "id": "uuid",
+  "rank": 7,
+  "period": "today"
+}
+```
+
+**Rate limiting:** Rejects submissions within 30 seconds of the user's last run.
+
+**Errors:**
+- `400` — Invalid or missing `score`/`total`
+- `401` — Not authenticated
+- `429` — Submission too soon (within 30 seconds of prior run)
+- `503` — Database not configured
+- `500` — DB insert or rank query failed
+
+---
+
+### `GET /api/trivia/leaderboard`
+
+Returns ranked leaderboard rows for the selected period. Public endpoint — no authentication required. Each user appears at most once (their best run for the period).
+
+| Param    | Type   | Default  | Description                                      |
+| -------- | ------ | -------- | ------------------------------------------------ |
+| `period` | string | `today`  | `today` (last 24 hours) or `allTime`             |
+| `limit`  | number | `25`     | Max rows to return (1-100)                       |
+
+**Response (200):**
+```json
+{
+  "period": "today",
+  "rows": [{
+    "rank": 1,
+    "userId": "google-oauth2|abc",
+    "username": "CinematicAlex",
+    "avatarUrl": "https://lh3.googleusercontent.com/...",
+    "score": 20,
+    "total": 20,
+    "pct": 100.00
+  }],
+  "updatedAt": "ISO 8601"
+}
+```
+
+When `POSTGRES_URL` is not set, returns `{ "demo": true, "rows": [] }`.
+
+**Caching:** `Cache-Control: s-maxage=30, stale-while-revalidate=60`
+
+**Errors:**
+- `400` — Invalid `period` value
+- `500` — DB query failed
+
+---
+
+### `GET /api/trivia/leaderboard/rank`
+
+Returns the rank a given score would achieve in the specified period. Used to show anonymous users their "ghost" rank without writing to the database.
+
+| Param    | Type   | Required | Description                                 |
+| -------- | ------ | -------- | ------------------------------------------- |
+| `score`  | number | yes      | Correct answers                             |
+| `total`  | number | yes      | Total questions                             |
+| `period` | string | no       | `today` (default) or `allTime`              |
+
+**Response (200):**
+```json
+{
+  "rank": 9,
+  "period": "today",
+  "totalPlayers": 42
+}
+```
+
+**Errors:**
+- `400` — Invalid `score`/`total`
+- `500` — DB query failed

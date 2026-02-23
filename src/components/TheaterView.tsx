@@ -160,7 +160,7 @@ export function TheaterView({
           <Container
             maxWidth="xl"
             sx={{
-              px: { xs: 1, sm: 2 },
+              px: { xs: 1.5, sm: 2 },
               py: { xs: 1.5, sm: 2 },
               display: 'flex',
               flexDirection: { xs: 'column', sm: 'row' },

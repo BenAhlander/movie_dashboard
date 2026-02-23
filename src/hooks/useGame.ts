@@ -1,8 +1,17 @@
 'use client'
 
-import { useCallback, useReducer } from 'react'
-import type { GameState, GamePhase, TriviaSession } from '@/types/trivia'
-import { getQuestions, QUESTIONS_PER_ROUND, submitRun } from '@/lib/trivia/gameApi'
+import { useCallback, useReducer, useRef } from 'react'
+import type {
+  GameState,
+  GamePhase,
+  TriviaSession,
+  SubmitRunResponse,
+} from '@/types/trivia'
+import {
+  getQuestions,
+  QUESTIONS_PER_ROUND,
+  submitRun,
+} from '@/lib/trivia/gameApi'
 
 const LOCAL_STORAGE_KEY = 'trivia_sessions'
 
@@ -95,7 +104,10 @@ function saveSession(score: number): void {
     const sessions: TriviaSession[] = raw ? JSON.parse(raw) : []
     const today = new Date().toISOString().split('T')[0]
     sessions.unshift({ date: today, score })
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(sessions.slice(0, 30)))
+    localStorage.setItem(
+      LOCAL_STORAGE_KEY,
+      JSON.stringify(sessions.slice(0, 30))
+    )
   } catch {
     // localStorage may be unavailable in some contexts
   }
@@ -123,9 +135,10 @@ export function getLocalStats(): LocalStats {
 
   const today = new Date().toISOString().split('T')[0]
   const todaySessions = sessions.filter((s) => s.date === today)
-  const todayBest = todaySessions.length > 0
-    ? Math.max(...todaySessions.map((s) => s.score))
-    : null
+  const todayBest =
+    todaySessions.length > 0
+      ? Math.max(...todaySessions.map((s) => s.score))
+      : null
 
   let streak = 0
   const uniqueDates = [...new Set(sessions.map((s) => s.date))].sort().reverse()
@@ -145,27 +158,51 @@ export function getLocalStats(): LocalStats {
   return { todayBest, streak }
 }
 
-export function useGame() {
-  const [state, dispatch] = useReducer(gameReducer, undefined, createInitialState)
+export function useGame(isAuthenticated = false) {
+  const [state, dispatch] = useReducer(
+    gameReducer,
+    undefined,
+    createInitialState
+  )
 
-  const answer = useCallback((userAnswer: boolean) => {
-    const currentQuestion = state.questions[state.currentIndex]
-    if (!currentQuestion) return false
+  // Store the latest submit result so it can be read by ResultsScreen
+  const lastSubmitResult = useRef<SubmitRunResponse>({ saved: false })
 
-    const correct = userAnswer === currentQuestion.answer
+  const answer = useCallback(
+    (userAnswer: boolean) => {
+      const currentQuestion = state.questions[state.currentIndex]
+      if (!currentQuestion) return false
 
-    dispatch({ type: 'ANSWER', correct })
+      const correct = userAnswer === currentQuestion.answer
 
-    // If this was the last question in this round, save the session
-    const isLast = state.currentIndex + 1 >= state.totalQuestions
-    if (isLast) {
-      const finalRoundScore = correct ? state.roundScore + 1 : state.roundScore
-      submitRun(finalRoundScore, state.totalQuestions)
-      saveSession(state.score + (correct ? 1 : 0))
-    }
+      dispatch({ type: 'ANSWER', correct })
 
-    return correct
-  }, [state.questions, state.currentIndex, state.roundScore, state.score, state.totalQuestions])
+      // If this was the last question in this round, save the session
+      const isLast = state.currentIndex + 1 >= state.totalQuestions
+      if (isLast) {
+        const finalRoundScore = correct
+          ? state.roundScore + 1
+          : state.roundScore
+        // Fire and forget — the result is stored in the ref for later use
+        submitRun(finalRoundScore, state.totalQuestions, isAuthenticated).then(
+          (result) => {
+            lastSubmitResult.current = result
+          }
+        )
+        saveSession(state.score + (correct ? 1 : 0))
+      }
+
+      return correct
+    },
+    [
+      state.questions,
+      state.currentIndex,
+      state.roundScore,
+      state.score,
+      state.totalQuestions,
+      isAuthenticated,
+    ]
+  )
 
   const startNewGame = useCallback(() => {
     dispatch({ type: 'START' })
@@ -205,5 +242,6 @@ export function useGame() {
     keepPlaying,
     setPhase,
     backToResults,
+    lastSubmitResult,
   }
 }

@@ -3,9 +3,10 @@ import type {
   LeaderboardRow,
   LeaderboardPeriod,
   ScoreTier,
+  SubmitRunResponse,
 } from '@/types/trivia'
 import { triviaQuestions } from './mockQuestions'
-import { mockLeaderboardEntries } from './mockLeaderboard'
+
 
 export const QUESTIONS_PER_ROUND = 5
 
@@ -28,41 +29,103 @@ export function getQuestions(excludeIds: string[] = []): TriviaQuestion[] {
   const excludeSet = new Set(excludeIds)
   const available = triviaQuestions.filter((q) => !excludeSet.has(q.id))
   // If we've used most questions, reset the pool
-  const pool = available.length >= QUESTIONS_PER_ROUND ? available : triviaQuestions
+  const pool =
+    available.length >= QUESTIONS_PER_ROUND ? available : triviaQuestions
   return shuffle(pool).slice(0, QUESTIONS_PER_ROUND)
 }
 
-/**
- * Submit a completed game run. Currently a no-op that returns
- * the score. In a future version this would POST to an API.
- */
-export function submitRun(score: number, total: number): { score: number; total: number } {
-  return { score, total }
+/** API response shape from GET /api/trivia/leaderboard */
+interface LeaderboardApiRow {
+  rank: number
+  userId: string
+  username: string
+  avatarUrl: string | null
+  score: number
+  total: number
+  pct: number
 }
 
 /**
- * Get leaderboard data with the current user inserted at the
- * appropriate rank based on their score.
+ * Submit a completed game run. POSTs to the API when authenticated,
+ * returns { saved: false } when not.
  */
-export function getLeaderboard(
-  _period: LeaderboardPeriod,
-  userScore: number,
-  userTotal: number,
-): LeaderboardRow[] {
-  const userRow: Omit<LeaderboardRow, 'rank'> = {
-    username: 'You',
-    score: userScore,
-    total: userTotal,
-    isCurrentUser: true,
+export async function submitRun(
+  score: number,
+  total: number,
+  isAuthenticated: boolean
+): Promise<SubmitRunResponse> {
+  if (!isAuthenticated) return { saved: false }
+
+  try {
+    const res = await fetch('/api/trivia/runs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ score, total }),
+    })
+    if (!res.ok) {
+      console.warn('submitRun failed:', res.status, await res.text())
+      return { saved: false }
+    }
+    const data = await res.json()
+    return { saved: true, rank: data.rank }
+  } catch {
+    return { saved: false }
   }
+}
 
-  const allEntries = [...mockLeaderboardEntries, userRow]
-  allEntries.sort((a, b) => b.score - a.score)
+/**
+ * Get leaderboard data from the API. Falls back to mock data
+ * if the API is unavailable or in demo mode.
+ */
+export async function getLeaderboard(
+  period: LeaderboardPeriod,
+  currentUserId?: string
+): Promise<LeaderboardRow[]> {
+  try {
+    const res = await fetch(`/api/trivia/leaderboard?period=${period}`)
+    if (!res.ok) throw new Error('fetch failed')
+    const data = await res.json()
 
-  return allEntries.map((entry, index) => ({
-    ...entry,
-    rank: index + 1,
-  }))
+    // Demo mode or empty leaderboard — return empty
+    if (data.demo || !data.rows?.length) {
+      return []
+    }
+
+    return (data.rows as LeaderboardApiRow[]).map((row) => ({
+      rank: row.rank,
+      username: row.username,
+      score: row.score,
+      total: row.total,
+      pct: row.pct,
+      avatarUrl: row.avatarUrl,
+      userId: row.userId,
+      isCurrentUser: currentUserId ? row.userId === currentUserId : false,
+    }))
+  } catch (err) {
+    console.warn('getLeaderboard failed:', err)
+    return []
+  }
+}
+
+/**
+ * Get the ghost rank for an anonymous user's score.
+ * Returns the rank their score would achieve and the total player count.
+ */
+export async function getGhostRank(
+  score: number,
+  total: number,
+  period: LeaderboardPeriod = 'today'
+): Promise<{ rank: number; totalPlayers: number }> {
+  try {
+    const res = await fetch(
+      `/api/trivia/leaderboard/rank?score=${score}&total=${total}&period=${period}`
+    )
+    if (!res.ok) throw new Error('fetch failed')
+    const data = await res.json()
+    return { rank: data.rank, totalPlayers: data.totalPlayers }
+  } catch {
+    return { rank: 1, totalPlayers: 0 }
+  }
 }
 
 /** Score tier messages — scaled for 5-question rounds */

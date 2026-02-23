@@ -15,6 +15,14 @@ export interface LeaderboardRow {
   score: number
   total: number
   isCurrentUser?: boolean
+  avatarUrl?: string | null
+  userId?: string
+  pct?: number
+}
+
+export interface SubmitRunResponse {
+  saved: boolean
+  rank?: number
 }
 
 export type GamePhase = 'playing' | 'results' | 'leaderboard'

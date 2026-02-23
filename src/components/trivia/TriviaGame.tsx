@@ -2,16 +2,25 @@
 
 import { useEffect } from 'react'
 import { Box } from '@mui/material'
+import { useUser } from '@auth0/nextjs-auth0/client'
 import { useGame } from '@/hooks/useGame'
 import { GameBoard } from './GameBoard'
 import { ResultsScreen } from './ResultsScreen'
 import { LeaderboardScreen } from './LeaderboardScreen'
 
+interface TriviaGameProps {
+  authEnabled: boolean
+}
+
 /**
  * Top-level trivia state machine component.
  * Manages transitions between playing, results, and leaderboard phases.
  */
-export function TriviaGame() {
+export function TriviaGame({ authEnabled }: TriviaGameProps) {
+  const { user } = useUser()
+  const isAuthenticated = !!user
+  const currentUserId = user?.sub ?? undefined
+
   const {
     state,
     currentQuestion,
@@ -21,7 +30,8 @@ export function TriviaGame() {
     keepPlaying,
     setPhase,
     backToResults,
-  } = useGame()
+    lastSubmitResult,
+  } = useGame(isAuthenticated)
 
   // Lock page-level scroll while the trivia game is mounted
   useEffect(() => {
@@ -88,6 +98,9 @@ export function TriviaGame() {
             onKeepPlaying={keepPlaying}
             onNewGame={startNewGame}
             onViewLeaderboard={() => setPhase('leaderboard')}
+            isAuthenticated={isAuthenticated}
+            authEnabled={authEnabled}
+            submitResult={lastSubmitResult.current}
           />
         </Box>
       )}
@@ -97,8 +110,9 @@ export function TriviaGame() {
           sx={{
             position: 'absolute',
             inset: 0,
-            overflowY: 'auto',
-            overflowX: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
           }}
         >
           <LeaderboardScreen
@@ -106,6 +120,9 @@ export function TriviaGame() {
             userTotal={state.totalAnswered}
             onPlayAgain={keepPlaying}
             onBack={backToResults}
+            isAuthenticated={isAuthenticated}
+            currentUserId={currentUserId}
+            authEnabled={authEnabled}
           />
         </Box>
       )}
