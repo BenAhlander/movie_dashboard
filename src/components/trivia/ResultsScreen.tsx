@@ -4,14 +4,16 @@ import { useEffect, useRef, useMemo, useState, useCallback } from 'react'
 import { Box, Typography, Paper, Divider, Button } from '@mui/material'
 import ShareIcon from '@mui/icons-material/Share'
 import CheckIcon from '@mui/icons-material/Check'
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import {
   motion,
   useMotionValue,
   useTransform,
   animate as fmAnimate,
 } from 'framer-motion'
-import { getScoreMessage, getScoreColor } from '@/lib/trivia/gameApi'
+import { getScoreMessage, getScoreColor, getGhostRank } from '@/lib/trivia/gameApi'
 import { getLocalStats } from '@/hooks/useGame'
+import type { SubmitRunResponse } from '@/types/trivia'
 
 interface ResultsScreenProps {
   score: number
@@ -22,6 +24,9 @@ interface ResultsScreenProps {
   onKeepPlaying: () => void
   onNewGame: () => void
   onViewLeaderboard: () => void
+  isAuthenticated: boolean
+  authEnabled: boolean
+  submitResult: SubmitRunResponse
 }
 
 export function ResultsScreen({
@@ -33,6 +38,9 @@ export function ResultsScreen({
   onKeepPlaying,
   onNewGame,
   onViewLeaderboard,
+  isAuthenticated,
+  authEnabled,
+  submitResult,
 }: ResultsScreenProps) {
   const headingRef = useRef<HTMLDivElement>(null)
   const [shareLabel, setShareLabel] = useState<'share' | 'copied'>('share')
@@ -63,11 +71,9 @@ export function ResultsScreen({
 
   const handleShare = useCallback(async () => {
     const text = [
-      `FreshTomatoes Trivia`,
+      'FreshTomatoes Trivia',
       `Round ${roundNumber}: ${roundScore}/${totalQuestions} (${percentage}%)`,
-      roundNumber > 1
-        ? `Total: ${score}/${totalAnswered}`
-        : null,
+      roundNumber > 1 ? `Total: ${score}/${totalAnswered}` : null,
       '',
       'Think you can beat me? Play now!',
     ]
@@ -90,7 +96,24 @@ export function ResultsScreen({
     } catch {
       // Clipboard not available
     }
-  }, [roundNumber, roundScore, totalQuestions, percentage, score, totalAnswered])
+  }, [
+    roundNumber,
+    roundScore,
+    totalQuestions,
+    percentage,
+    score,
+    totalAnswered,
+  ])
+
+  const showSignInNudge = authEnabled && !isAuthenticated
+  const [ghostRank, setGhostRank] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (!showSignInNudge || roundScore === 0) return
+    getGhostRank(roundScore, totalQuestions).then((data) => {
+      setGhostRank(data.rank)
+    })
+  }, [showSignInNudge, roundScore, totalQuestions])
 
   return (
     <Box
@@ -154,7 +177,12 @@ export function ResultsScreen({
 
         <Divider sx={{ width: 60, mx: 'auto', my: 1.5 }} />
 
-        <Typography id="results-total-questions" variant="h4" fontWeight={400} color="text.secondary">
+        <Typography
+          id="results-total-questions"
+          variant="h4"
+          fontWeight={400}
+          color="text.secondary"
+        >
           / {totalQuestions}
         </Typography>
 
@@ -179,6 +207,18 @@ export function ResultsScreen({
           {message}
         </Typography>
       </Paper>
+
+      {/* Score saved indicator for authenticated users */}
+      {isAuthenticated && submitResult.saved && submitResult.rank && (
+        <Typography
+          id="results-saved-indicator"
+          variant="caption"
+          color="text.secondary"
+          sx={{ mt: 1.5 }}
+        >
+          Score saved — you&apos;re ranked #{submitResult.rank} today
+        </Typography>
+      )}
 
       {/* Cumulative score (shown after first round) */}
       {roundNumber > 1 && (
@@ -224,6 +264,62 @@ export function ResultsScreen({
               Streak: {localStats.streak}d
             </Typography>
           )}
+        </Box>
+      )}
+
+      {/* Anonymous sign-in nudge with ghost rank */}
+      {showSignInNudge && (
+        <Box
+          id="results-signin-nudge"
+          sx={{
+            mt: 2.5,
+            width: '100%',
+            maxWidth: 320,
+            backgroundColor: 'rgba(229,9,20,0.06)',
+            border: '1px solid rgba(229,9,20,0.2)',
+            borderRadius: '12px',
+            p: 2.5,
+          }}
+        >
+          {ghostRank !== null && roundScore > 0 && (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                mb: 1.5,
+              }}
+            >
+              <EmojiEventsIcon sx={{ color: '#f59e0b', fontSize: 20 }} />
+              <Typography variant="body2" fontWeight={600}>
+                You&apos;d be ranked #{ghostRank} today!
+              </Typography>
+            </Box>
+          )}
+
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 2 }}
+          >
+            Sign in to save your score and claim your spot on the leaderboard.
+          </Typography>
+
+          <Button
+            id="btn-results-signin"
+            variant="contained"
+            color="primary"
+            fullWidth
+            href="/auth/login?returnTo=/trivia"
+            sx={{
+              height: 44,
+              borderRadius: '10px',
+              fontWeight: 700,
+              textTransform: 'none',
+            }}
+          >
+            Sign in with Google
+          </Button>
         </Box>
       )}
 
@@ -314,7 +410,8 @@ export function ResultsScreen({
           clip: 'rect(0, 0, 0, 0)',
         }}
       >
-        Round {roundNumber} complete. You scored {roundScore} out of {totalQuestions}.
+        Round {roundNumber} complete. You scored {roundScore} out of{' '}
+        {totalQuestions}.
       </Box>
     </Box>
   )
