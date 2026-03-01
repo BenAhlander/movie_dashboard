@@ -47,7 +47,7 @@ export function AuthGate() {
           variant="contained"
           color="primary"
           size="large"
-          href="/api/auth/login?returnTo=/head-to-head"
+          href="/auth/login?returnTo=/head-to-head"
           sx={{
             height: 48,
             borderRadius: '12px',
