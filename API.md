@@ -458,10 +458,156 @@ Runs idempotent schema migrations. Protected by a shared secret.
 | -------- | ------ | -------- | ---------------------------------------- |
 | `secret` | string | yes      | Must match `MIGRATION_SECRET` env var    |
 
-Adds the `status` column to `feedback_posts`, creates the `feedback_comments` table with indexes, creates the `polls`, `poll_options`, and `poll_votes` tables with indexes and constraints, and creates the `trivia_runs` table with indexes for the trivia leaderboard.
+Adds the `status` column to `feedback_posts`, creates the `feedback_comments` table with indexes, creates the `polls`, `poll_options`, and `poll_votes` tables with indexes and constraints, creates the `trivia_runs` table with indexes for the trivia leaderboard, and creates the `h2h_films`, `h2h_matchups`, and `h2h_matchup_votes` tables with indexes and constraints for the Head-to-Head film voting game.
 
 **Errors:**
 - `401` — Missing or invalid secret
+
+---
+
+## Head-to-Head Film Voting Routes
+
+### `GET /api/h2h/matchup`
+
+Returns the next unseen matchup for the authenticated user. The endpoint
+excludes all matchups the user has already voted on (anti-repeat via
+`h2h_matchup_votes`). Returns one random matchup from the remaining pool.
+
+**Authentication:** Required (Auth0 session).
+
+**Response (200):**
+```json
+{
+  "matchup": {
+    "id": "uuid",
+    "filmA": {
+      "id": "uuid",
+      "tmdbId": 12345,
+      "title": "string",
+      "year": 2024,
+      "posterPath": "/path.jpg | null",
+      "eloRating": 1042.50,
+      "voteCount": 37
+    },
+    "filmB": {
+      "id": "uuid",
+      "tmdbId": 67890,
+      "title": "string",
+      "year": 2019,
+      "posterPath": "/path.jpg | null",
+      "eloRating": 978.25,
+      "voteCount": 31
+    }
+  }
+}
+```
+
+**Response (204):** Pool exhausted — the user has voted on every available matchup. Empty body.
+
+**Errors:**
+- `401` — Not authenticated
+- `500` — DB query failed
+- `503` — Database not configured
+
+**Used by:** `src/hooks/useHeadToHead.ts` — called on mount and after each vote to pre-fetch the next matchup.
+
+---
+
+### `POST /api/h2h/matchups/[id]/vote`
+
+Records the authenticated user's vote on a matchup and updates Elo ratings
+for both films. The vote insert and both Elo updates execute in a single
+database transaction. Idempotent — returns `409` if the user has already
+voted on this matchup.
+
+**Authentication:** Required (Auth0 session).
+
+| Param | Type   | Required | Description              |
+| ----- | ------ | -------- | ------------------------ |
+| `id`  | string | yes      | Matchup UUID (path param) |
+
+**Request body:**
+```json
+{
+  "winnerId": "uuid"
+}
+```
+
+`winnerId` must be one of `filmA.id` or `filmB.id` from the referenced matchup.
+
+**Elo update formula:** Standard Elo with K-factor 32, initial rating 1000, floor > 0.
+```
+expected_W = 1 / (1 + 10^((elo_L - elo_W) / 400))
+new_elo_W  = elo_W + 32 * (1 - expected_W)
+new_elo_L  = elo_L + 32 * (0 - (1 - expected_W))
+```
+
+**Response (200):**
+```json
+{
+  "vote": {
+    "id": "uuid",
+    "matchupId": "uuid",
+    "winnerId": "uuid",
+    "votedAt": "ISO 8601"
+  },
+  "updatedRatings": {
+    "filmAId": "uuid",
+    "filmAElo": 1050.75,
+    "filmBId": "uuid",
+    "filmBElo": 970.00
+  }
+}
+```
+
+**Errors:**
+- `400` — `winnerId` missing or not one of the two films in the matchup
+- `401` — Not authenticated
+- `404` — Matchup not found
+- `409` — User has already voted on this matchup
+- `500` — DB transaction failed
+
+**Used by:** `src/hooks/useHeadToHead.ts` — called on swipe commit or button click.
+
+---
+
+### `GET /api/h2h/leaderboard`
+
+Returns top-ranked films by Elo rating. Films with fewer than `minVotes` total matchup appearances are excluded to suppress noise from newly seeded films.
+
+**Authentication:** Required (Auth0 session).
+
+| Param      | Type   | Default | Description                                    |
+| ---------- | ------ | ------- | ---------------------------------------------- |
+| `limit`    | number | `50`    | Max rows to return (1–100)                     |
+| `minVotes` | number | `10`    | Minimum matchup appearances to qualify         |
+
+**Response (200):**
+```json
+{
+  "films": [{
+    "rank": 1,
+    "id": "uuid",
+    "tmdbId": 12345,
+    "title": "string",
+    "year": 2024,
+    "posterPath": "/path.jpg | null",
+    "eloRating": 1142.50,
+    "voteCount": 87
+  }],
+  "generatedAt": "ISO 8601",
+  "minVotes": 10
+}
+```
+
+**Caching:** `Cache-Control: s-maxage=30, stale-while-revalidate=60`
+
+**Errors:**
+- `400` — Invalid query params
+- `401` — Not authenticated
+- `500` — DB query failed
+
+**Used by:** `src/components/h2h/H2HLeaderboard.tsx` — called when the user navigates to the leaderboard view.
 
 ---
 

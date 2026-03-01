@@ -27,6 +27,7 @@ import LiveTvIcon from '@mui/icons-material/LiveTv'
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
 import PollIcon from '@mui/icons-material/Poll'
 import QuizIcon from '@mui/icons-material/Quiz'
+import CompareArrowsIcon from '@mui/icons-material/CompareArrows'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline'
 import { motion } from 'framer-motion'
@@ -39,6 +40,7 @@ const menuItems = [
   { label: 'Feedback', path: '/feedback', icon: ChatBubbleOutlineIcon },
   { label: 'Polls', path: '/polls', icon: PollIcon },
   { label: 'Trivia', path: '/trivia', icon: QuizIcon },
+  { label: 'Versus', path: '/head-to-head', icon: CompareArrowsIcon },
   { label: 'Leaderboard', path: '/leaderboard', icon: EmojiEventsIcon },
   { label: 'Profile', path: '/profile', icon: PersonOutlineIcon, authOnly: true },
 ]

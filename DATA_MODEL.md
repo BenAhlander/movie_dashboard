@@ -231,6 +231,77 @@ Source: `migrations/005_trivia_questions.sql`.
 
 ---
 
+### h2h_films
+
+Films that participate in head-to-head matchups. Seeded from TMDB via an admin
+endpoint. Title, year, poster, and genre data are denormalised at seed time.
+Each film has an Elo rating (starting at 1000) that evolves with each vote.
+
+```typescript
+interface H2HFilm {
+  id: string             // UUID PK
+  tmdb_id: number        // TMDB integer movie ID, UNIQUE
+  title: string          // snapshotted from TMDB at seed time
+  year: number | null    // SMALLINT release year
+  poster_path: string | null  // TMDB poster path
+  genre_ids: number[]    // TMDB genre ID array, denormalized
+  elo_rating: number     // NUMERIC(8,2), default 1000.00, must be > 0
+  vote_count: number     // integer, total matchup appearances, >= 0
+  created_at: string     // TIMESTAMPTZ
+  updated_at: string     // TIMESTAMPTZ
+}
+```
+
+Source: `migrations/006_h2h_film_voting.sql`, `src/app/api/h2h/`.
+
+---
+
+### h2h_matchups
+
+Pre-generated unordered pairs of films. Each pair is stored once with
+`film_a_id` holding the lexicographically smaller UUID (enforced at the
+application layer) so the UNIQUE constraint prevents reverse-order duplicates.
+
+```typescript
+interface H2HMatchup {
+  id: string             // UUID PK
+  film_a_id: string      // FK -> h2h_films.id
+  film_b_id: string      // FK -> h2h_films.id
+  created_at: string     // TIMESTAMPTZ
+}
+```
+
+Constraint: `film_a_id <> film_b_id` (no self-pairing).
+Uniqueness: `(film_a_id, film_b_id)` UNIQUE — combined with canonical ordering,
+ensures each unordered pair exists at most once.
+
+Source: `migrations/006_h2h_film_voting.sql`.
+
+---
+
+### h2h_matchup_votes
+
+One row per (user, matchup) pair. Records which film the user chose as the
+winner. Serves double duty as the anti-repeat mechanism: `GET /api/h2h/matchup`
+uses `NOT EXISTS` on this table to exclude matchups a user has already voted on.
+
+```typescript
+interface H2HMatchupVote {
+  id: string             // UUID PK
+  matchup_id: string     // FK -> h2h_matchups.id ON DELETE CASCADE
+  user_id: string        // Auth0 sub
+  winner_id: string      // FK -> h2h_films.id (must be one of the matchup's films)
+  voted_at: string       // TIMESTAMPTZ
+}
+```
+
+Votes are immutable once cast — no update or delete endpoint.
+Uniqueness: `(matchup_id, user_id)` UNIQUE — one vote per user per matchup.
+
+Source: `migrations/006_h2h_film_voting.sql`, `src/app/api/h2h/`.
+
+---
+
 ## Entity Relationship Summary
 
 ```
@@ -245,6 +316,11 @@ trivia_questions ──< trivia_user_answers  (one question, many answer records
 trivia_runs                               (standalone; no FK to questions)
 
 user_favorites                            (standalone; no FK to other tables)
+
+h2h_films ──< h2h_matchups (film_a_id)   (one film, many matchups as film A)
+h2h_films ──< h2h_matchups (film_b_id)   (one film, many matchups as film B)
+h2h_matchups ──< h2h_matchup_votes       (one matchup, many votes)
+h2h_films ──< h2h_matchup_votes (winner) (one film, many wins)
 ```
 
 All `user_id` columns reference Auth0 subject claims. There is no `users` table
@@ -266,3 +342,7 @@ These rules are enforced in API route code and must be maintained there:
 | `count` query param range 1–20 | `trivia_questions` | `GET /api/trivia/questions` |
 | Poll option count 2–6 | `poll_options` | `POST /api/polls` |
 | Poll expires_in values: `1d`, `3d`, `7d`, `null` | `polls` | `POST /api/polls` |
+| Canonical matchup pair ordering (film_a_id < film_b_id as TEXT) | `h2h_matchups` | `POST /api/admin/h2h/generate-matchups` |
+| winner_id must be one of the matchup's two films | `h2h_matchup_votes` | `POST /api/h2h/matchups/[id]/vote` |
+| Elo update atomicity (vote + both film updates in one TX) | `h2h_films`, `h2h_matchup_votes` | `POST /api/h2h/matchups/[id]/vote` |
+| Leaderboard minimum vote threshold (default 10) | `h2h_films` | `GET /api/h2h/leaderboard` |
