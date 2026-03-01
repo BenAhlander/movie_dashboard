@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { Box } from '@mui/material'
 import { Auth0Provider } from '@auth0/nextjs-auth0/client'
 import { Header } from './Header'
@@ -16,6 +18,14 @@ interface LayoutShellProps {
   authEnabled?: boolean
 }
 
+function ScrollToTop() {
+  const pathname = usePathname()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
+
 function LayoutShellInner({
   children,
   authEnabled,
@@ -28,6 +38,7 @@ function LayoutShellInner({
 
   return (
     <Box sx={{ minHeight: '100vh', pb: 4 }}>
+      <ScrollToTop />
       <Header authEnabled={authEnabled} />
       <ModeSwitcher />
       {children}
