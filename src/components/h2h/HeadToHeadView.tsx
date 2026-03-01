@@ -40,8 +40,9 @@ export function HeadToHeadView({ authEnabled }: HeadToHeadViewProps) {
   const [isLocked, setIsLocked] = useState(false)
   const [flashColor, setFlashColor] = useState<string | null>(null)
 
-  // Lock page-level scroll while the game is mounted
+  // Scroll to top then lock page-level scroll while the game is mounted
   useEffect(() => {
+    window.scrollTo(0, 0)
     const html = document.documentElement
     const body = document.body
     html.style.overflow = 'hidden'

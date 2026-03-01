@@ -33,8 +33,9 @@ export function TriviaGame({ authEnabled }: TriviaGameProps) {
     lastSubmitResult,
   } = useGame(isAuthenticated)
 
-  // Lock page-level scroll while the trivia game is mounted
+  // Scroll to top then lock page-level scroll while the trivia game is mounted
   useEffect(() => {
+    window.scrollTo(0, 0)
     const html = document.documentElement
     const body = document.body
     html.style.overflow = 'hidden'
